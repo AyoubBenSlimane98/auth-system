@@ -1,0 +1,26 @@
+# Node.js dependencies
+node_modules
+
+# Compiled output
+dist
+
+# Test files
+test
+coverage
+
+# Git
+.git
+.gitignore
+
+# Config files
+.prettierrc
+
+# Environment files
+.env
+.env.*
+
+# Documentation
+README.md
+
+.temp
+.tmp
