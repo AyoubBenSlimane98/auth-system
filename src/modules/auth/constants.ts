@@ -6,3 +6,5 @@ export const ARGON2_OPTIONS = {
   parallelism: 1,
   hashLength: 32,
 };
+
+export const JWT_EXPIRES_IN = '15m';
