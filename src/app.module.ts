@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { DatabaseModule } from './database/database.module';
 import { ConfigModule } from '@nestjs/config';
-import { databaseConfig } from './configs/configuration';
+import { argonConfig, databaseConfig } from './configs/configuration';
 import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
@@ -9,7 +9,7 @@ import { AuthModule } from './modules/auth/auth.module';
     ConfigModule.forRoot({
       isGlobal: true,
       cache: true,
-      load: [databaseConfig],
+      load: [databaseConfig, argonConfig],
       expandVariables: true,
     }),
     DatabaseModule,
