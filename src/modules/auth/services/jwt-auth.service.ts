@@ -1,7 +1,6 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { JWT_EXPIRES_IN } from '../constants';
 import { randomBytes } from 'crypto';
 import { JwtPayload } from '../interfaces';
 
@@ -18,16 +17,9 @@ export class JwtAuthService {
     };
   }
   async generateAccessToken(user_id: string): Promise<string> {
-    return await this.jwt.signAsync(
-      {
-        sub: user_id,
-      },
-      {
-        privateKey: this.Keys.privateKey,
-        algorithm: 'RS256',
-        expiresIn: JWT_EXPIRES_IN,
-      },
-    );
+    return await this.jwt.signAsync({
+      sub: user_id,
+    });
   }
 
   async generateTokens(user_id: string) {

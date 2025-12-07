@@ -8,3 +8,7 @@ export const ARGON2_OPTIONS = {
 };
 
 export const JWT_EXPIRES_IN = '15m';
+export const JWT_STRATEGY = 'jwt-access-token';
+export const JWT_PROPERTY = 'user';
+
+export const GOOGLE_STRATEGY = 'google';
