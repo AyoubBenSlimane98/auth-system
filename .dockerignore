@@ -24,3 +24,7 @@ README.md
 
 .temp
 .tmp
+
+# keys
+src/keys/*.pem
+
