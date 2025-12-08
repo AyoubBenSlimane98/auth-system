@@ -46,6 +46,6 @@ export const users = pgTable(
     index('idx_users_provider').on(table.provider),
     index('idx_users_google_provider_id')
       .on(table.provider_id)
-      .where(sql`${table.provider} = 'google')`),
+      .where(sql`${table.provider} = 'google'`),
   ],
 );

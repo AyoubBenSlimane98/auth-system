@@ -8,7 +8,6 @@ import {
   index,
 } from 'drizzle-orm/pg-core';
 import { timeDate, users } from './users.schema';
-import { sql } from 'drizzle-orm';
 
 export const passwordRefreshTokens = pgTable(
   'password_refresh_tokens',
@@ -32,11 +31,5 @@ export const passwordRefreshTokens = pgTable(
       .onDelete('cascade')
       .onUpdate('cascade'),
     index('idx_password_refresh_tokens_token').on(table.token),
-    index('idx_password_refresh_tokens_active')
-      .on(table.token)
-      .where(sql`${table.expires_at} > now()`),
-    index('idx_password_refresh_tokens_not_active')
-      .on(table.token)
-      .where(sql`${table.expires_at} < CURRENT_TIMESTAMPZ()`),
   ],
 );

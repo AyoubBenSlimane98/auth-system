@@ -39,6 +39,6 @@ export const refreshTokens = pgTable(
     index('idx_refresh_tokens_token').on(table.token),
     index('idx_refresh_tokens_active')
       .on(table.token)
-      .where(sql`${table.is_revoked}=fasle`),
+      .where(sql`${table.is_revoked} = false`),
   ],
 );

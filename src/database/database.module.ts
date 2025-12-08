@@ -4,11 +4,12 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import * as schema from './schema';
 import * as relations from './relations';
+import { DATABASE_CONNECTION } from './constants';
 @Global()
 @Module({
   providers: [
     {
-      provide: 'DATABASE_CONNECTION',
+      provide: DATABASE_CONNECTION,
       useFactory: (config: ConfigService, dbModule: DatabaseModule) => {
         const pool = new Pool({
           connectionString: config.getOrThrow<string>('database.url'),
@@ -25,7 +26,7 @@ import * as relations from './relations';
       inject: [ConfigService, DatabaseModule],
     },
   ],
-  exports: ['DATABASE_CONNECTION'],
+  exports: [DATABASE_CONNECTION],
 })
 export class DatabaseModule implements OnApplicationShutdown {
   private pool: Pool;
