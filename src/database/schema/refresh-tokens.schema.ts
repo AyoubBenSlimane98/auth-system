@@ -36,7 +36,7 @@ export const refreshTokens = pgTable(
     })
       .onDelete('cascade')
       .onUpdate('cascade'),
-    index('idx_refresh_tokens_token').on(table.token),
+    index('idx_refresh_tokens_token').on(table.token_id, table.user_id),
     index('idx_refresh_tokens_active')
       .on(table.token)
       .where(sql`${table.is_revoked} = false`),

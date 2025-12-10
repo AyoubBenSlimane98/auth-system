@@ -8,8 +8,12 @@ import {
 } from './configs/configuration';
 import { AuthModule } from './modules/auth/auth.module';
 import googleConfig from './configs/configuration/google.config';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './modules/auth/guards';
+import { UsersModule } from './modules/users/users.module';
+import { ProfilesModule } from './modules/profiles/profiles.module';
+import { RefreshTokensModule } from './modules/refresh-tokens/refresh-tokens.module';
+import { GlobalExceptionFilter } from './common/filters';
 
 @Module({
   imports: [
@@ -21,7 +25,13 @@ import { JwtAuthGuard } from './modules/auth/guards';
     }),
     DatabaseModule,
     AuthModule,
+    UsersModule,
+    ProfilesModule,
+    RefreshTokensModule,
   ],
-  providers: [{ provide: APP_GUARD, useClass: JwtAuthGuard }],
+  providers: [
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_FILTER, useClass: GlobalExceptionFilter },
+  ],
 })
 export class AppModule {}

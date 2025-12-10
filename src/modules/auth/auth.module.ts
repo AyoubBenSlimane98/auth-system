@@ -11,6 +11,8 @@ import { ConfigService } from '@nestjs/config';
 import { PassportModule } from '@nestjs/passport';
 import { JWT_EXPIRES_IN, JWT_PROPERTY, JWT_STRATEGY } from './constants';
 import { GoogleStrategy, JwtStrategy } from './strategies';
+import { UsersModule } from '../users/users.module';
+import { RefreshTokensModule } from '../refresh-tokens/refresh-tokens.module';
 
 @Module({
   imports: [
@@ -29,6 +31,8 @@ import { GoogleStrategy, JwtStrategy } from './strategies';
         verifyOptions: { algorithms: ['RS256'] },
       }),
     }),
+    UsersModule,
+    RefreshTokensModule,
   ],
   controllers: [LocalAuthController, GoogleAuthController],
   providers: [
