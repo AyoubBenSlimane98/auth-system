@@ -3,7 +3,8 @@ import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../../../database/schema';
 import { DATABASE_CONNECTION } from 'src/database/constants';
 import { StoreTokenInput, RefreshTokenResponse } from '../interfaces';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
+
 @Injectable()
 export class RefreshTokensRepository {
   constructor(
@@ -41,5 +42,25 @@ export class RefreshTokensRepository {
     await this.db
       .delete(schema.refreshTokens)
       .where(eq(schema.refreshTokens.token_id, token_id));
+  }
+
+  async findValidToken(
+    user_id: string,
+    token_id: string,
+  ): Promise<{
+    hash_token: string | null;
+  }> {
+    const [token] = await this.db
+      .select({ hash_token: schema.refreshTokens.token })
+      .from(schema.refreshTokens)
+      .where(
+        and(
+          eq(schema.refreshTokens.user_id, user_id),
+          eq(schema.refreshTokens.token_id, token_id),
+          sql`${schema.refreshTokens.expires_at} > now()`,
+          eq(schema.refreshTokens.is_revoked, false),
+        ),
+      );
+    return token ?? null;
   }
 }

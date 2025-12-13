@@ -9,7 +9,6 @@ import {
   index,
 } from 'drizzle-orm/pg-core';
 import { timeDate, users } from './users.schema';
-import { sql } from 'drizzle-orm';
 
 export const refreshTokens = pgTable(
   'refresh_tokens',
@@ -37,8 +36,11 @@ export const refreshTokens = pgTable(
       .onDelete('cascade')
       .onUpdate('cascade'),
     index('idx_refresh_tokens_token').on(table.token_id, table.user_id),
-    index('idx_refresh_tokens_active')
-      .on(table.token)
-      .where(sql`${table.is_revoked} = false`),
+    index('idx_refresh_tokens_active').on(
+      table.token_id,
+      table.user_id,
+      table.expires_at,
+      table.is_revoked,
+    ),
   ],
 );

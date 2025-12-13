@@ -1,11 +1,11 @@
 import { relations } from 'drizzle-orm';
-import { passwordRefreshTokens, users } from '../schema';
+import { passwordResetTokens, users } from '../schema';
 
 export const passwordRefreshTokensRelation = relations(
-  passwordRefreshTokens,
+  passwordResetTokens,
   ({ one }) => ({
     user: one(users, {
-      fields: [passwordRefreshTokens.user_id],
+      fields: [passwordResetTokens.user_id],
       references: [users.user_id],
     }),
   }),

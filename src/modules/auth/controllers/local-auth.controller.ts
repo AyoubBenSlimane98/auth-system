@@ -1,9 +1,21 @@
 import { Body, Controller, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
 import { LocalAuthService } from '../services';
-import { LoginDto, LogoutDto, RegisterDto } from '../dtos';
+import {
+  ConfirmPasswordDto,
+  LoginDto,
+  LogoutDto,
+  RefreshDto,
+  RegisterDto,
+  ResetPasswordDto,
+} from '../dtos';
 import { Public, User } from 'src/common/decorators';
 import { ApiResponse } from 'src/common/interfaces';
-import { LoginResponse, LogoutResponse, RegisterResponse } from '../interfaces';
+import {
+  LoginResponse,
+  LogoutResponse,
+  RefreshResponse,
+  RegisterResponse,
+} from '../interfaces';
 
 @Controller('local-auth')
 export class LocalAuthController {
@@ -32,19 +44,26 @@ export class LocalAuthController {
   }
 
   @Patch('refresh')
-  async refresh() {
-    return this.localAuthService.refresh();
+  async refresh(
+    @User('sub', new ParseUUIDPipe()) sub: string,
+    dto: RefreshDto,
+  ): Promise<ApiResponse<RefreshResponse>> {
+    return this.localAuthService.refresh(sub, dto);
   }
 
   @Public()
   @Post('reset-password')
-  async resetPassword() {
-    return this.localAuthService.resetPassword();
+  async resetPassword(
+    @Body() dto: ResetPasswordDto,
+  ): Promise<ApiResponse<void>> {
+    return this.localAuthService.resetPassword(dto.email);
   }
 
   @Public()
   @Post('confirm-password')
-  async confirmPassword() {
-    return this.localAuthService.confirmPassword();
+  async confirmPassword(
+    @Body() dto: ConfirmPasswordDto,
+  ): Promise<ApiResponse<void>> {
+    return this.localAuthService.confirmPassword(dto);
   }
 }

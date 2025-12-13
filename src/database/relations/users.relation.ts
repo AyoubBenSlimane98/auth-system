@@ -1,7 +1,7 @@
 import { relations } from 'drizzle-orm';
 import {
   authProviders,
-  passwordRefreshTokens,
+  passwordResetTokens,
   profiles,
   refreshTokens,
   users,
@@ -12,6 +12,6 @@ export const usersRelation = relations(users, ({ many, one }) => ({
   usersToRoles: many(usersToRoles),
   profile: one(profiles),
   tokens: many(refreshTokens),
-  passwordRefreshTokens: many(passwordRefreshTokens),
+  passwordRefreshTokens: many(passwordResetTokens),
   authProviders: many(authProviders),
 }));

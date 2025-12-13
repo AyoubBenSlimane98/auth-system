@@ -5,6 +5,7 @@ import {
   argonConfig,
   databaseConfig,
   jwtKeyConfig,
+  sgMailConfig,
 } from './configs/configuration';
 import { AuthModule } from './modules/auth/auth.module';
 import googleConfig from './configs/configuration/google.config';
@@ -20,7 +21,13 @@ import { GlobalExceptionFilter } from './common/filters';
     ConfigModule.forRoot({
       isGlobal: true,
       cache: true,
-      load: [databaseConfig, argonConfig, jwtKeyConfig, googleConfig],
+      load: [
+        databaseConfig,
+        argonConfig,
+        jwtKeyConfig,
+        googleConfig,
+        sgMailConfig,
+      ],
       expandVariables: true,
     }),
     DatabaseModule,

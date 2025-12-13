@@ -1,23 +1,42 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { LoginDto, LogoutDto, RegisterDto } from '../dtos';
+import {
+  ConfirmPasswordDto,
+  LoginDto,
+  LogoutDto,
+  RefreshDto,
+  RegisterDto,
+} from '../dtos';
 import { UsersRepository } from 'src/modules/users/repositories';
 import { ArgonService } from './argon.service';
 import { JwtAuthService } from './jwt-auth.service';
-import { RefreshTokensRepository } from 'src/modules/refresh-tokens/repositories';
+import {
+  PasswordResetTokensRepository,
+  RefreshTokensRepository,
+} from 'src/modules/refresh-tokens/repositories';
 import { ApiResponse } from 'src/common/interfaces';
-import { LoginResponse, RegisterResponse, LogoutResponse } from '../interfaces';
+import {
+  LoginResponse,
+  RegisterResponse,
+  LogoutResponse,
+  RefreshResponse,
+} from '../interfaces';
+import { randomBytes } from 'crypto';
+import { SgMailService } from './sgMail.service';
 
 @Injectable()
 export class LocalAuthService {
   constructor(
     private readonly usersRepository: UsersRepository,
     private readonly rtRepository: RefreshTokensRepository,
+    private readonly passwordRtRepository: PasswordResetTokensRepository,
     private readonly argonService: ArgonService,
     private readonly jwtAuthService: JwtAuthService,
+    private readonly sgmailService: SgMailService,
   ) {}
   async register(dto: RegisterDto): Promise<ApiResponse<RegisterResponse>> {
     const existUser = await this.usersRepository.emailExists(dto.email);
@@ -116,11 +135,92 @@ export class LocalAuthService {
     };
   }
 
-  async refresh() {}
+  async refresh(
+    sub: string,
+    dto: RefreshDto,
+  ): Promise<ApiResponse<RefreshResponse>> {
+    const token = await this.rtRepository.findValidToken(sub, dto.token_id);
+    if (!token || !token.hash_token) {
+      throw new UnauthorizedException({
+        message: 'Invalid token',
+      });
+    }
 
-  async resetPassword() {}
+    const isTokenMatched = await this.argonService.verifyData(
+      token.hash_token,
+      dto.refresh_token,
+    );
+    if (!isTokenMatched) {
+      throw new UnauthorizedException({
+        message: 'Invalid token',
+      });
+    }
 
-  async confirmPassword() {}
+    const access_token = await this.jwtAuthService.generateAccessToken(sub);
+
+    return {
+      status: true,
+      message: 'Refresh token successfully',
+      data: {
+        user_id: sub,
+        access_token,
+      },
+    };
+  }
+
+  async resetPassword(email: string): Promise<ApiResponse<void>> {
+    const user = await this.usersRepository.findUserByEmail(email);
+    if (!user) {
+      return {
+        status: true,
+        message: 'If the email exists, a reset link has been sent',
+      };
+    }
+    const token = this.generatePasswordResetToken();
+    const hashToken = await this.argonService.hashData(token);
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+    await this.passwordRtRepository.saveTokenPassword(
+      user.user_id,
+      hashToken,
+      expiresAt,
+    );
+    await this.sgmailService.sendEmailToken(token, email);
+    return {
+      status: true,
+      message: 'If the email exists, a reset link has been sent',
+    };
+  }
+
+  async confirmPassword(dto: ConfirmPasswordDto): Promise<ApiResponse<void>> {
+    const tokens = await this.passwordRtRepository.findValidTokens();
+    let matchedToken: (typeof tokens)[0] | null = null;
+
+    for (const record of tokens) {
+      const isMatched = await this.argonService.verifyData(
+        record.token,
+        dto.token,
+      );
+      if (isMatched) {
+        matchedToken = record;
+        break;
+      }
+    }
+    if (!matchedToken) {
+      throw new BadRequestException('Invalid or expired token');
+    }
+
+    const hashPassword = await this.argonService.hashData(dto.new_password);
+    await this.usersRepository.changePasswordUser(
+      matchedToken.user_id,
+      hashPassword,
+    );
+    await this.passwordRtRepository.markAsUsed(matchedToken.id);
+    return {
+      status: true,
+      message: 'Password reset successfully',
+    };
+  }
 
   private async createUserWithProfile(dto: RegisterDto) {
     const { password, ...rest } = dto;
@@ -141,5 +241,8 @@ export class LocalAuthService {
       expires_at,
     });
     return token;
+  }
+  private generatePasswordResetToken(): string {
+    return randomBytes(32).toString('hex');
   }
 }

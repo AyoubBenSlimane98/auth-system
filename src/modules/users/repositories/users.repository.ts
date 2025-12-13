@@ -65,4 +65,11 @@ export class UsersRepository {
       };
     });
   }
+
+  async changePasswordUser(user_id: string, new_password: string) {
+    await this.db
+      .update(schema.users)
+      .set({ password: new_password })
+      .where(eq(schema.users.user_id, user_id));
+  }
 }
