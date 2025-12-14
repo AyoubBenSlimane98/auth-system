@@ -10,6 +10,7 @@ import {
   LogoutDto,
   RefreshDto,
   RegisterDto,
+  ResetPasswordDto,
 } from '../dtos';
 import { UsersRepository } from 'src/modules/users/repositories';
 import { ArgonService } from './argon.service';
@@ -168,8 +169,8 @@ export class LocalAuthService {
     };
   }
 
-  async resetPassword(email: string): Promise<ApiResponse<void>> {
-    const user = await this.usersRepository.findUserByEmail(email);
+  async resetPassword(dto: ResetPasswordDto): Promise<ApiResponse<void>> {
+    const user = await this.usersRepository.findUserByEmail(dto.email);
     if (!user) {
       return {
         status: true,
@@ -185,7 +186,7 @@ export class LocalAuthService {
       hashToken,
       expiresAt,
     );
-    await this.sgmailService.sendEmailToken(token, email);
+    await this.sgmailService.sendEmailToken(token, dto.email);
     return {
       status: true,
       message: 'If the email exists, a reset link has been sent',
