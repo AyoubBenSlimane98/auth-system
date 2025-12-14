@@ -56,7 +56,7 @@ export class LocalAuthController {
   async resetPassword(
     @Body() dto: ResetPasswordDto,
   ): Promise<ApiResponse<void>> {
-    return this.localAuthService.resetPassword(dto.email);
+    return this.localAuthService.resetPassword(dto);
   }
 
   @Public()
