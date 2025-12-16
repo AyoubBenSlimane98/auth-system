@@ -1,7 +1,7 @@
 import { PassportStrategy } from '@nestjs/passport';
 
 import { GOOGLE_STRATEGY } from '../constants';
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Profile, Strategy, VerifyCallback } from 'passport-google-oauth20';
 import { GooglePayload } from '../interfaces';
@@ -25,10 +25,13 @@ export class GoogleStrategy extends PassportStrategy(
     profile: Profile,
     done: VerifyCallback,
   ) {
+    const email = profile.emails?.[0];
+    if (!email?.verified) {
+      throw new UnauthorizedException({ message: '' });
+    }
     const user: GooglePayload = {
-      provider: 'google',
       providerId: profile.id,
-      email: profile.emails?.[0].value,
+      email: email.value,
       firstName: profile.name?.givenName,
       lastName: profile.name?.familyName,
       picture: profile.photos?.[0].value,

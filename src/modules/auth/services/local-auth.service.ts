@@ -28,11 +28,13 @@ import {
 } from '../interfaces';
 import { randomBytes } from 'crypto';
 import { SgMailService } from './sgMail.service';
+import { RefreshTokensService } from 'src/modules/refresh-tokens/refresh-tokens.service';
 
 @Injectable()
 export class LocalAuthService {
   constructor(
     private readonly usersRepository: UsersRepository,
+    private readonly refreshTokensService: RefreshTokensService,
     private readonly rtRepository: RefreshTokensRepository,
     private readonly passwordRtRepository: PasswordResetTokensRepository,
     private readonly argonService: ArgonService,
@@ -50,7 +52,7 @@ export class LocalAuthService {
 
     const tokens = await this.jwtAuthService.generateTokens(newUser.user_id);
 
-    const tokenRecord = await this.storeRefreshToken(
+    const tokenRecord = await this.refreshTokensService.storeRefreshToken(
       newUser.user_id,
       tokens.refresh_token,
     );
@@ -87,7 +89,7 @@ export class LocalAuthService {
       });
     const tokens = await this.jwtAuthService.generateTokens(user.user_id);
 
-    const tokenRecord = await this.storeRefreshToken(
+    const tokenRecord = await this.refreshTokensService.storeRefreshToken(
       user.user_id,
       tokens.refresh_token,
     );
@@ -233,16 +235,7 @@ export class LocalAuthService {
     });
     return user;
   }
-  private async storeRefreshToken(user_id: string, refreshToken: string) {
-    const hashedToken = await this.argonService.hashData(refreshToken);
-    const expires_at = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-    const token = await this.rtRepository.storeToken({
-      user_id,
-      token: hashedToken,
-      expires_at,
-    });
-    return token;
-  }
+
   private generatePasswordResetToken(): string {
     return randomBytes(32).toString('hex');
   }

@@ -1,10 +1,11 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { LocalAuthController, GoogleAuthController } from './controllers';
 import {
   GoogleAuthService,
   LocalAuthService,
   JwtAuthService,
   ArgonService,
+  SgMailService,
 } from './services';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -13,6 +14,7 @@ import { JWT_EXPIRES_IN, JWT_PROPERTY, JWT_STRATEGY } from './constants';
 import { GoogleStrategy, JwtStrategy } from './strategies';
 import { UsersModule } from '../users/users.module';
 import { RefreshTokensModule } from '../refresh-tokens/refresh-tokens.module';
+import { AuthProvidersRepository } from './repositories';
 
 @Module({
   imports: [
@@ -33,6 +35,8 @@ import { RefreshTokensModule } from '../refresh-tokens/refresh-tokens.module';
     }),
     UsersModule,
     RefreshTokensModule,
+    forwardRef(() => UsersModule),
+    forwardRef(() => RefreshTokensModule),
   ],
   controllers: [LocalAuthController, GoogleAuthController],
   providers: [
@@ -42,6 +46,9 @@ import { RefreshTokensModule } from '../refresh-tokens/refresh-tokens.module';
     ArgonService,
     GoogleStrategy,
     JwtStrategy,
+    SgMailService,
+    AuthProvidersRepository,
   ],
+  exports: [ArgonService, AuthProvidersRepository],
 })
 export class AuthModule {}

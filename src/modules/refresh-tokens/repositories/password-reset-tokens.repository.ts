@@ -16,8 +16,14 @@ export class PasswordResetTokensRepository {
       .insert(schema.passwordResetTokens)
       .values({ user_id, token, expires_at });
   }
-  async findValidTokens() {
-    return await this.db
+  async findValidTokens(): Promise<
+    {
+      id: string;
+      user_id: string;
+      token: string;
+    }[]
+  > {
+    const tokens = await this.db
       .select({
         id: schema.passwordResetTokens.id,
         user_id: schema.passwordResetTokens.user_id,
@@ -30,6 +36,7 @@ export class PasswordResetTokensRepository {
           sql`${schema.passwordResetTokens.expires_at} > now()`,
         ),
       );
+    return tokens;
   }
   async markAsUsed(id: string) {
     await this.db

@@ -1,6 +1,6 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as sgMail from '@sendgrid/mail';
+import sgMail from '@sendgrid/mail';
 
 @Injectable()
 export class SgMailService {
@@ -18,7 +18,7 @@ export class SgMailService {
       subject: 'Verify your email',
       text: `Verify your email using this link: ${verifyUrl}`,
       html: `
-        <p>Welcome 👋</p>
+        <p>Welcome </p>
         <p>Please verify your email by clicking the link below:</p>
         <a href="${verifyUrl}" target="_blank">Verify Email</a>
       `,
