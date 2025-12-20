@@ -15,7 +15,9 @@ import { UsersModule } from './modules/users/users.module';
 import { ProfilesModule } from './modules/profiles/profiles.module';
 import { RefreshTokensModule } from './modules/refresh-tokens/refresh-tokens.module';
 import { GlobalExceptionFilter } from './common/filters';
+import { envDevSchema, envProdSchema } from './configs/environment';
 
+const nodeEnv = process.env.NODE_ENV ?? 'development';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -28,7 +30,13 @@ import { GlobalExceptionFilter } from './common/filters';
         googleConfig,
         sgMailConfig,
       ],
+      envFilePath: [`.env.${nodeEnv}.local`, '.env'],
       expandVariables: true,
+      validationSchema: nodeEnv === 'production' ? envProdSchema : envDevSchema,
+      validationOptions: {
+        allowUnknown: false,
+        abortEarly: nodeEnv === 'production',
+      },
     }),
     DatabaseModule,
     AuthModule,
