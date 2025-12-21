@@ -15,6 +15,7 @@ import { GoogleStrategy, JwtStrategy } from './strategies';
 import { UsersModule } from '../users/users.module';
 import { RefreshTokensModule } from '../refresh-tokens/refresh-tokens.module';
 import { AuthProvidersRepository } from './repositories';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { AuthProvidersRepository } from './repositories';
         verifyOptions: { algorithms: ['RS256'] },
       }),
     }),
+    ThrottlerModule.forRoot({ throttlers: [{ ttl: 60000, limit: 10 }] }),
     UsersModule,
     RefreshTokensModule,
     forwardRef(() => UsersModule),
