@@ -41,7 +41,7 @@ export class LocalAuthService {
     private readonly jwtAuthService: JwtAuthService,
     private readonly sgmailService: SgMailService,
   ) {}
-  async register(dto: RegisterDto): Promise<ApiResponse<RegisterResponse>> {
+  async register(dto: RegisterDto): Promise<RegisterResponse> {
     const existUser = await this.usersRepository.emailExists(dto.email);
 
     if (existUser) {
@@ -73,7 +73,7 @@ export class LocalAuthService {
     };
   }
 
-  async login(dto: LoginDto): Promise<ApiResponse<LoginResponse>> {
+  async login(dto: LoginDto): Promise<LoginResponse> {
     const user = await this.usersRepository.findUserByEmail(dto.email);
     if (!user || !user.password)
       throw new UnauthorizedException({
@@ -107,10 +107,7 @@ export class LocalAuthService {
     };
   }
 
-  async logout(
-    sub: string,
-    dto: LogoutDto,
-  ): Promise<ApiResponse<LogoutResponse>> {
+  async logout(sub: string, dto: LogoutDto): Promise<LogoutResponse> {
     const token = await this.rtRepository.findTokenById(dto.token_id, sub);
     if (!token || !token.hash_token) {
       throw new UnauthorizedException({
@@ -138,10 +135,7 @@ export class LocalAuthService {
     };
   }
 
-  async refresh(
-    sub: string,
-    dto: RefreshDto,
-  ): Promise<ApiResponse<RefreshResponse>> {
+  async refresh(sub: string, dto: RefreshDto): Promise<RefreshResponse> {
     const token = await this.rtRepository.findValidToken(sub, dto.token_id);
     if (!token || !token.hash_token) {
       throw new UnauthorizedException({

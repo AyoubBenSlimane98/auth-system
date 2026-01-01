@@ -1,12 +1,18 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import {
+  forwardRef,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../../../database/schema';
 import { DATABASE_CONNECTION } from 'src/database/constants';
-import { eq } from 'drizzle-orm';
-import { AuthProvider, RegisterDto } from 'src/modules/auth/dtos';
+import { and, eq } from 'drizzle-orm';
+import { RegisterDto } from 'src/modules/auth/dtos';
 import { ProfilesRepository } from 'src/modules/profiles/repositories';
 import { UserResponse } from '../interfaces';
 import { AuthProvidersRepository } from 'src/modules/auth/repositories';
+import { AuthProvider } from 'src/common/enum';
 @Injectable()
 export class UsersRepository {
   constructor(
@@ -23,7 +29,22 @@ export class UsersRepository {
       .where(eq(schema.users.email, email));
     return Boolean(user);
   }
-
+  async findUserById(userId: string): Promise<{
+    user_id: string;
+  }> {
+    const [user] = await this.db
+      .select({
+        user_id: schema.users.user_id,
+      })
+      .from(schema.users)
+      .where(eq(schema.users.user_id, userId));
+    if (!user || !user.user_id) {
+      throw new NotFoundException({
+        message: `User with id ${userId} not found`,
+      });
+    }
+    return user;
+  }
   async findUserByEmail(email: string): Promise<{
     user_id: string;
     password: string | null;
@@ -75,15 +96,33 @@ export class UsersRepository {
   }) {
     return await this.db.transaction(async (tx) => {
       const { email, first_name, last_name, provider_user_id } = data;
+      const [existingProvider] = await tx
+        .select()
+        .from(schema.authProviders)
+        .where(
+          and(
+            eq(schema.authProviders.provider, AuthProvider.google),
+            eq(schema.authProviders.provider_user_id, provider_user_id),
+          ),
+        );
+      console.log({ existingProvider });
+      if (existingProvider) {
+        return { user_id: existingProvider.user_id };
+      }
       const [user] = await tx
         .insert(schema.users)
         .values({ email, is_email_verified: true })
         .returning({ user_id: schema.users.user_id });
-      await this.authProvidersRepository.create({
-        user_id: user.user_id,
-        provider: AuthProvider.google,
-        provider_user_id,
-      });
+
+      await this.authProvidersRepository.create(
+        {
+          user_id: user.user_id,
+          provider: AuthProvider.google,
+          provider_user_id,
+        },
+        tx,
+      );
+
       const profile = await this.profilesRepository.createProfile(
         {
           user_id: user.user_id,

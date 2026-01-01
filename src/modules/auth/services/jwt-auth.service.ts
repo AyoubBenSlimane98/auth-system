@@ -3,12 +3,14 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { randomBytes } from 'crypto';
 import { JwtPayload } from '../interfaces';
+import { RolesToPermissionsRepository } from 'src/modules/roles/repositories';
 
 @Injectable()
 export class JwtAuthService {
   constructor(
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
+    private readonly rtpRepository: RolesToPermissionsRepository,
   ) {}
   private get Keys() {
     return {
@@ -17,9 +19,13 @@ export class JwtAuthService {
     };
   }
   async generateAccessToken(user_id: string): Promise<string> {
-    return await this.jwt.signAsync({
+    const permissions = await this.rtpRepository.findUserPermissions(user_id);
+    const permissionsArray = permissions.map((p) => p.permission);
+    const payload = {
       sub: user_id,
-    });
+      permissions: permissionsArray,
+    };
+    return await this.jwt.signAsync(payload);
   }
 
   async generateTokens(user_id: string) {

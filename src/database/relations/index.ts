@@ -5,3 +5,5 @@ export * from './profiles.relation';
 export * from './refresh-tokens.relation';
 export * from './password-reset-tokens.relation';
 export * from './auth-providers.relation';
+export * from './permissions.relations';
+export * from './roles-to-permissions.relation';

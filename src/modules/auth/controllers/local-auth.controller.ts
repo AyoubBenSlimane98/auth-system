@@ -23,31 +23,29 @@ export class LocalAuthController {
 
   @Public()
   @Post('register')
-  async register(
-    @Body() dto: RegisterDto,
-  ): Promise<ApiResponse<RegisterResponse>> {
+  async register(@Body() dto: RegisterDto): Promise<RegisterResponse> {
     return this.localAuthService.register(dto);
   }
 
   @Public()
   @Post('login')
-  async login(@Body() dto: LoginDto): Promise<ApiResponse<LoginResponse>> {
+  async login(@Body() dto: LoginDto): Promise<LoginResponse> {
     return this.localAuthService.login(dto);
   }
 
   @Post('logout')
   async logout(
     @User('sub', new ParseUUIDPipe()) sub: string,
-    dto: LogoutDto,
-  ): Promise<ApiResponse<LogoutResponse>> {
+    @Body() dto: LogoutDto,
+  ): Promise<LogoutResponse> {
     return this.localAuthService.logout(sub, dto);
   }
 
   @Patch('refresh')
   async refresh(
     @User('sub', new ParseUUIDPipe()) sub: string,
-    dto: RefreshDto,
-  ): Promise<ApiResponse<RefreshResponse>> {
+    @Body() dto: RefreshDto,
+  ): Promise<RefreshResponse> {
     return this.localAuthService.refresh(sub, dto);
   }
 

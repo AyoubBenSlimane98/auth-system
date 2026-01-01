@@ -16,6 +16,7 @@ import { UsersModule } from '../users/users.module';
 import { RefreshTokensModule } from '../refresh-tokens/refresh-tokens.module';
 import { AuthProvidersRepository } from './repositories';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { RolesModule } from '../roles/roles.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
     ThrottlerModule.forRoot({ throttlers: [{ ttl: 60000, limit: 10 }] }),
     UsersModule,
     RefreshTokensModule,
+    RolesModule,
     forwardRef(() => UsersModule),
     forwardRef(() => RefreshTokensModule),
   ],

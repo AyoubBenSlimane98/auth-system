@@ -6,12 +6,7 @@ import {
   MinLength,
   Matches,
 } from 'class-validator';
-
-export enum AuthProvider {
-  local = 'local',
-  google = 'google',
-  apple = 'apple',
-}
+import { AuthProvider } from 'src/common/enum';
 
 export class RegisterDto {
   @IsEmail()

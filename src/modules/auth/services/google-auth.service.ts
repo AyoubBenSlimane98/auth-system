@@ -14,6 +14,7 @@ export class GoogleAuthService {
 
   async CreateGoogleUser(data: GoogleUserInput) {
     const user = await this.usersRepository.createGoogleUser(data);
+
     if (!user) {
       throw new UnauthorizedException({ message: 'User creation failed' });
     }

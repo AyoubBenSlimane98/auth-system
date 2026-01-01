@@ -10,7 +10,7 @@ export class SgMailService {
 
   async sendEmailToken(token: string, email: string) {
     const verifyUrl = `${this.config.getOrThrow<string>(
-      'app.frontend_url',
+      'sgmail.frontend_url',
     )}/verify-email?token=${token}`;
     const msg = {
       to: email,
