@@ -5,6 +5,7 @@ import { Pool } from 'pg';
 import * as schema from './schema';
 import * as relations from './relations';
 import { DATABASE_CONNECTION } from './constants';
+
 @Global()
 @Module({
   providers: [

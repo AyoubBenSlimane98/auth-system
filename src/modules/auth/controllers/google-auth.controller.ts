@@ -22,23 +22,25 @@ export class GoogleAuthController {
       last_name: user.lastName ?? '',
       provider_user_id: user.providerId,
     };
+
     const result = await this.googleAuthService.CreateGoogleUser(
       googleUserData as GoogleUserInput,
     );
+    console.log(' Result :', result);
     res.cookie('access_token', result.access_token, {
       httpOnly: true,
       secure: true,
-      sameSite: 'strict',
+      sameSite: 'lax',
     });
     res.cookie('refresh_token', result.refresh_token, {
       httpOnly: true,
       secure: true,
-      sameSite: 'strict',
+      sameSite: 'lax',
     });
     res.cookie('token_id', result.token_id, {
       httpOnly: true,
       secure: true,
-      sameSite: 'strict',
+      sameSite: 'lax',
     });
     res.redirect('http://localhost:3001');
   }

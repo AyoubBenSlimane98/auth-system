@@ -26,4 +26,6 @@ export const envDevSchema = joi.object({
 
   SENDGRID_API_KEY: joi.string().optional(),
   SENDGRID_FROM_EMAIL: joi.string().email().optional(),
+  CORS_ORIGIN: joi.string().optional(),
+  FRONTEND_URL: joi.string().uri(),
 });

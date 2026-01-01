@@ -5,7 +5,8 @@ import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  const corsOrigins = process.env.CORS_ORIGIN?.split(',');
+
+  const corsOrigins = process.env.CORS_ORIGIN || '*';
   app.enableCors({
     origin: corsOrigins,
     methods: [
@@ -17,6 +18,7 @@ async function bootstrap() {
       RequestMethod.OPTIONS,
     ],
     allowedHeaders: ['Content-Type', 'Authorization'],
+    Credential: true,
   });
   app.use(helmet({ contentSecurityPolicy: false }));
   app.useGlobalPipes(
@@ -32,8 +34,8 @@ async function bootstrap() {
     type: VersioningType.URI,
     defaultVersion: '1',
   });
+
   const port = process.env.PORT || 3000;
   await app.listen(port);
-  console.log(`Application is running on: http://localhost:${port}/api`);
 }
 void bootstrap();

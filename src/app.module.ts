@@ -16,6 +16,9 @@ import { ProfilesModule } from './modules/profiles/profiles.module';
 import { RefreshTokensModule } from './modules/refresh-tokens/refresh-tokens.module';
 import { GlobalExceptionFilter } from './common/filters';
 import { envDevSchema, envProdSchema } from './configs/environment';
+import { RolesModule } from './modules/roles/roles.module';
+import { SeedsModule } from './seeds/seeds.module';
+import { PermissionGuard } from './common/guards';
 
 const nodeEnv = process.env.NODE_ENV ?? 'development';
 @Module({
@@ -34,7 +37,7 @@ const nodeEnv = process.env.NODE_ENV ?? 'development';
       expandVariables: true,
       validationSchema: nodeEnv === 'production' ? envProdSchema : envDevSchema,
       validationOptions: {
-        allowUnknown: false,
+        allowUnknown: true,
         abortEarly: nodeEnv === 'production',
       },
     }),
@@ -43,9 +46,12 @@ const nodeEnv = process.env.NODE_ENV ?? 'development';
     UsersModule,
     ProfilesModule,
     RefreshTokensModule,
+    RolesModule,
+    SeedsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: PermissionGuard },
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },
   ],
 })
