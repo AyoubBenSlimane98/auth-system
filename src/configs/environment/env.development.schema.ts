@@ -28,4 +28,8 @@ export const envDevSchema = joi.object({
   SENDGRID_FROM_EMAIL: joi.string().email().optional(),
   CORS_ORIGIN: joi.string().optional(),
   FRONTEND_URL: joi.string().uri(),
+
+  REDIS_HOST: joi.string().required(),
+  REDIS_PORT: joi.number().required().default(6379),
+  REDIS_PASSWORD: joi.string().required(),
 });
