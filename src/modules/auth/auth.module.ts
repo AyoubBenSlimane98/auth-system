@@ -15,8 +15,8 @@ import { GoogleStrategy, JwtStrategy } from './strategies';
 import { UsersModule } from '../users/users.module';
 import { RefreshTokensModule } from '../refresh-tokens/refresh-tokens.module';
 import { AuthProvidersRepository } from './repositories';
-import { ThrottlerModule } from '@nestjs/throttler';
 import { RolesModule } from '../roles/roles.module';
+import { AuthRateLimitGuard } from 'src/common/guards';
 
 @Module({
   imports: [
@@ -35,7 +35,6 @@ import { RolesModule } from '../roles/roles.module';
         verifyOptions: { algorithms: ['RS256'] },
       }),
     }),
-    ThrottlerModule.forRoot({ throttlers: [{ ttl: 60000, limit: 10 }] }),
     UsersModule,
     RefreshTokensModule,
     RolesModule,
@@ -52,6 +51,7 @@ import { RolesModule } from '../roles/roles.module';
     JwtStrategy,
     SgMailService,
     AuthProvidersRepository,
+    AuthRateLimitGuard,
   ],
   exports: [ArgonService, AuthProvidersRepository],
 })

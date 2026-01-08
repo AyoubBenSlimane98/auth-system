@@ -18,7 +18,6 @@ export class UsersRolesRepository {
       user_id: userId,
       role_id: roleId,
     }));
-    console.log(rows);
     const result = await this.db
       .insert(schema.usersToRoles)
       .values(rows)

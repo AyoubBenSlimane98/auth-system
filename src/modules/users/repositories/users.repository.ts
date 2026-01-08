@@ -12,7 +12,9 @@ import { RegisterDto } from 'src/modules/auth/dtos';
 import { ProfilesRepository } from 'src/modules/profiles/repositories';
 import { UserResponse } from '../interfaces';
 import { AuthProvidersRepository } from 'src/modules/auth/repositories';
-import { AuthProvider } from 'src/common/enum';
+import { AuthProvider, Roles } from 'src/common/enum';
+import { UsersRolesRepository } from './users-roles.repository';
+import { RolesRepository } from 'src/modules/roles/repositories';
 @Injectable()
 export class UsersRepository {
   constructor(
@@ -21,6 +23,8 @@ export class UsersRepository {
     private readonly profilesRepository: ProfilesRepository,
     @Inject(forwardRef(() => AuthProvidersRepository))
     private readonly authProvidersRepository: AuthProvidersRepository,
+    private readonly usersRolesRepository: UsersRolesRepository,
+    private readonly rolesRepository: RolesRepository,
   ) {}
   async emailExists(email: string): Promise<boolean> {
     const [user] = await this.db
@@ -105,7 +109,7 @@ export class UsersRepository {
             eq(schema.authProviders.provider_user_id, provider_user_id),
           ),
         );
-      console.log({ existingProvider });
+
       if (existingProvider) {
         return { user_id: existingProvider.user_id };
       }
@@ -122,7 +126,11 @@ export class UsersRepository {
         },
         tx,
       );
+      const role = await this.rolesRepository.findOneByName(Roles.USER);
 
+      await this.usersRolesRepository.assign(user.user_id, {
+        roles: [role.role_id],
+      });
       const profile = await this.profilesRepository.createProfile(
         {
           user_id: user.user_id,
