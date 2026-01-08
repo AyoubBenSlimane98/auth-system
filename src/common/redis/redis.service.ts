@@ -32,6 +32,9 @@ export class RedisService {
     return await this.redis.ttl(key);
   }
 
+  async incr(key: string): Promise<number> {
+    return await this.redis.incr(key);
+  }
   async hSet(
     key: string,
     fieldOrData: string | Record<string, unknown>,
@@ -67,5 +70,25 @@ export class RedisService {
 
   async hExists(key: string, field: string): Promise<number> {
     return await this.redis.hexists(key, field);
+  }
+
+  async rateLimitAtomic(
+    key: string,
+    limit: number,
+    ttl: number,
+  ): Promise<number> {
+    const lua = `
+    local current = redis.call("GET", KEYS[1])
+    if current and tonumber(current) >= tonumber(ARGV[1]) then
+        return -1
+    end
+    current = redis.call("INCR", KEYS[1])
+    if tonumber(current) == 1 then
+        redis.call("EXPIRE", KEYS[1], ARGV[2])
+    end
+    return current
+  `;
+    const result = await this.redis.eval(lua, 1, key, limit, ttl);
+    return result as number;
   }
 }

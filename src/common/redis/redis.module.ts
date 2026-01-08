@@ -1,9 +1,10 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { RedisService } from './redis.service';
 import { REDIS_CLIENT } from './redis.constants';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 
+@Global()
 @Module({
   providers: [
     {
@@ -14,6 +15,8 @@ import Redis from 'ioredis';
           host: config.getOrThrow<string>('redis.host'),
           port: config.getOrThrow<number>('redis.port'),
           password: config.getOrThrow<string>('redis.password'),
+          lazyConnect: false,
+          maxRetriesPerRequest: 3,
         });
         return redis;
       },

@@ -12,7 +12,10 @@ import {
   RegisterDto,
   ResetPasswordDto,
 } from '../dtos';
-import { UsersRepository } from 'src/modules/users/repositories';
+import {
+  UsersRepository,
+  UsersRolesRepository,
+} from 'src/modules/users/repositories';
 import { ArgonService } from './argon.service';
 import { JwtAuthService } from './jwt-auth.service';
 import {
@@ -29,6 +32,8 @@ import {
 import { randomBytes } from 'crypto';
 import { SgMailService } from './sgMail.service';
 import { RefreshTokensService } from 'src/modules/refresh-tokens/refresh-tokens.service';
+import { RolesRepository } from 'src/modules/roles/repositories';
+import { Roles } from 'src/common/enum';
 
 @Injectable()
 export class LocalAuthService {
@@ -36,6 +41,8 @@ export class LocalAuthService {
     private readonly usersRepository: UsersRepository,
     private readonly refreshTokensService: RefreshTokensService,
     private readonly rtRepository: RefreshTokensRepository,
+    private readonly usersRolesRepository: UsersRolesRepository,
+    private readonly rolesRepository: RolesRepository,
     private readonly passwordRtRepository: PasswordResetTokensRepository,
     private readonly argonService: ArgonService,
     private readonly jwtAuthService: JwtAuthService,
@@ -49,6 +56,11 @@ export class LocalAuthService {
     }
 
     const newUser = await this.createUserWithProfile(dto);
+    const role = await this.rolesRepository.findOneByName(Roles.USER);
+
+    await this.usersRolesRepository.assign(newUser.user_id, {
+      roles: [role.role_id],
+    });
 
     const tokens = await this.jwtAuthService.generateTokens(newUser.user_id);
 

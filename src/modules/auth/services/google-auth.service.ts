@@ -18,6 +18,7 @@ export class GoogleAuthService {
     if (!user) {
       throw new UnauthorizedException({ message: 'User creation failed' });
     }
+
     const tokens = await this.jwtAuthService.generateTokens(user.user_id);
 
     const tokenRecord = await this.refreshTokensService.storeRefreshToken(

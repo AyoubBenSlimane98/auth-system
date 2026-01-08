@@ -34,17 +34,10 @@ services:
     restart: unless-stopped
     ports:
       - '6379:6379'
-    env_file:
-      - .env.development.local
-    command:
-      - redis-server
-      - --appendonly
-      - yes
-      - --requirepass
-      - "${REDIS_PASSWORD}"
     volumes:
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
       - redis_data:/data
-
+    command: ['redis-server', '/usr/local/etc/redis/redis.conf']
 volumes:
   pgData:
   redis_data:

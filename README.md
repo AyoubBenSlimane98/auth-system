@@ -52,6 +52,11 @@ It follows **clean architecture** and best practices for security and maintainab
 - Security
   - Custom Guards for authentication and authorization
   - Public routes support using @Public() decorator
+  - Rate Limiting
+    - Protect endpoints from abuse using @RateLimit() decorator
+    - Default: 5 requests per 60 seconds
+    - Supports custom limits and TTL (e.g., @RateLimit(10) or @RateLimit({ limit: 3, ttl: 120 }))
+    - Works with AuthRateLimitGuard for enforcement
 
 - Scalable Architecture
   - Modular NestJS structure
@@ -60,7 +65,7 @@ It follows **clean architecture** and best practices for security and maintainab
 
 ---
 
-## TEach Stack
+## Teach Stack
 
 - **NestJS**
 - **POstgreSQL**
@@ -189,6 +194,7 @@ http://localhost:8080/api/v1/
 ```
 
 Authentication – Local
+
 ```bash
 
 # google auth
@@ -220,6 +226,59 @@ Protected route:
  @Post('logout')
 ```
 
+## Rate Limiting
+
+You can use the @RateLimit() decorator to protect endpoints from abuse.
+
+Default: 5 requests per 60 seconds
+
+```bash
+  #Default limit: 5 requests per 60 seconds
+  @RateLimit()
+  @Post('login')
+  async login() {}
+```
+
+Custom number of requests per 60 seconds:
+
+```bash
+  #Limit: 10 requests per 60 seconds
+  @RateLimit()
+  @Post('login')
+  async login() {}
+```
+
+Custom options (limit & TTL in seconds):
+
+```bash
+  #Limit: 3 requests per 120 seconds
+  @RateLimit({ limit: 3, ttl: 120 })
+  @Post('login')
+  async login() {}
+```
+
+Notes:
+
+- Make sure the **AuthRateLimitGuard** is applied to enforce the limit:
+
+```bash
+ #Limit: 3 requests per 120 seconds
+ @RateLimit()
+ @UseGuards(AuthRateLimitGuard)
+ @Post('login')
+ async login() {}
+```
+
+- If the limit is exceeded, the API returns:
+
+```bash
+{
+    "success": false,
+    "error": "HttpException",
+    "message": "Too many authentication attempts"
+}
+```
+
 ## Running the Project
 
 1- Install Dependencies
@@ -245,8 +304,21 @@ docker exec -it auth-system npm run seed
 
 ```
 
+## Database Schema
+
+You can view the complete database schema [here on dbdaigram.io](https://dbdiagram.io/d/695fe3dbd6e030a0247e9893)
+
+## Database Schema Overview
+
+Below is a compact overview of all tables, columns, types, and constraints.
+
+ <img  src="https://github.com/user-attachments/assets/62c939a9-d041-4c11-a3c1-92a640f6c777" />
+
+
 ## Contributing
+
 Contributions are welcome! Please open an issue or submit a pull request.
 
 ## License
+
 MIT © Ayyoub Benslimane

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { DatabaseModule } from './database/database.module';
 import { ConfigModule } from '@nestjs/config';
 import {
@@ -21,6 +21,7 @@ import { RolesModule } from './modules/roles/roles.module';
 import { SeedsModule } from './seeds/seeds.module';
 import { PermissionGuard } from './common/guards';
 import { RedisModule } from './common/redis/redis.module';
+import { GlobalRateLimitMiddleware } from './common/middleware';
 
 const nodeEnv = process.env.NODE_ENV ?? 'development';
 @Module({
@@ -59,4 +60,8 @@ const nodeEnv = process.env.NODE_ENV ?? 'development';
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(GlobalRateLimitMiddleware).forRoutes('*');
+  }
+}

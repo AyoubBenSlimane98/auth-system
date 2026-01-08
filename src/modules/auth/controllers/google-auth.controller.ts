@@ -1,19 +1,24 @@
 import { Controller, Get, Req, Res, UseGuards } from '@nestjs/common';
 import { GoogleAuthGuard } from '../guards';
 import type { Request, Response } from 'express';
-import { Public } from 'src/common/decorators';
+import { Public, RateLimit } from 'src/common/decorators';
 import { GoogleAuthService } from '../services';
 import type { GooglePayload, GoogleUserInput } from '../interfaces';
+import { AuthRateLimitGuard } from 'src/common/guards';
 @UseGuards(GoogleAuthGuard)
 @Controller('google-auth')
 export class GoogleAuthController {
   constructor(private readonly googleAuthService: GoogleAuthService) {}
-  @Get()
   @Public()
+  @RateLimit()
+  @UseGuards(AuthRateLimitGuard)
+  @Get()
   async googleAuth() {}
 
-  @Get('callback')
   @Public()
+  @RateLimit(3)
+  @UseGuards(AuthRateLimitGuard)
+  @Get('callback')
   async googleAuthRedirect(@Req() req: Request, @Res() res: Response) {
     const user = req.user as GooglePayload;
     const googleUserData = {
@@ -26,7 +31,6 @@ export class GoogleAuthController {
     const result = await this.googleAuthService.CreateGoogleUser(
       googleUserData as GoogleUserInput,
     );
-    console.log(' Result :', result);
     res.cookie('access_token', result.access_token, {
       httpOnly: true,
       secure: true,
