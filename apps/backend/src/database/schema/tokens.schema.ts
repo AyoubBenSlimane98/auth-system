@@ -11,8 +11,8 @@ import {
 import { sessions } from './sessions.schema';
 import { sql } from 'drizzle-orm';
 
-export const refreshTokens = pgTable(
-  'refresh_tokens',
+export const tokens = pgTable(
+  'tokens',
   {
     token_id: uuid('token_id').defaultRandom().notNull(),
     session_id: uuid('session_id').notNull(),
