@@ -1,0 +1,63 @@
+# dependencies
+node_modules
+.pnpm-store
+
+# turbo
+.turbo
+
+# build / coverage
+dist
+build
+coverage
+.nyc_output
+
+# frontend
+.next
+out
+.vercel
+*.tsbuildinfo
+next-env.d.ts
+
+# environment files
+.env
+.env.*
+!.env.example
+
+# logs
+logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# temp
+.temp
+.tmp
+tmp
+temp
+
+# runtime
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# macOS
+.DS_Store
+
+# IDE
+.idea
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# secrets
+secrets
+*.pem
+
+# diagnostic reports
+report.*.json
