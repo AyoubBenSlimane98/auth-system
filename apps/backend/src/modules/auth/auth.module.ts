@@ -10,6 +10,7 @@ import { SessionsModule } from '../sessions/sessions.module';
 import { UsersModule } from '../users/users.module';
 import { TokensModule } from '../tokens/tokens.module';
 import { JwtAuthStrategy } from './strategies';
+import { SendGridService } from './services/sendgrid.service';
 
 @Module({
   imports: [
@@ -32,6 +33,6 @@ import { JwtAuthStrategy } from './strategies';
     TokensModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtAuthService, JwtAuthStrategy],
+  providers: [AuthService, JwtAuthService, JwtAuthStrategy, SendGridService],
 })
 export class AuthModule {}
