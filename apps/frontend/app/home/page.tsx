@@ -1,12 +1,12 @@
 "use client";
-
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 interface Profile {
   first_name: string;
   last_name: string;
-  avatae_url: string;
+  avatar_url: string;
 }
 
 export default function HomePage() {
@@ -117,6 +117,15 @@ export default function HomePage() {
   return (
     <main className="min-h-screen flex items-center justify-center bg-zinc-950 text-white px-4">
       <div className="w-full max-w-md rounded-2xl border border-white/10 bg-zinc-900 p-8 text-center shadow-xl">
+        <Image
+          src={profile?.avatar_url || "/blank-profile.webp"}
+          loading="eager"
+          alt="Profile avatar"
+          width={120}
+          height={120}
+          className="mx-auto mb-4 rounded-full object-cover border border-white/10"
+        />
+
         <h1 className="text-2xl font-bold">
           Welcome
           <p className="text-green-400 text-lg mt-1">

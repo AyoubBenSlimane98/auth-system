@@ -68,6 +68,10 @@ export default function SignInPage() {
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [email, setEmail] = useState("");
+  const [errors, setErrors] = useState({
+    email: "",
+    password: "",
+  });
   const [password, setPassword] = useState("");
   const router = useRouter();
   const handleSubmit = async (e: React.FormEvent) => {
@@ -86,10 +90,12 @@ export default function SignInPage() {
         },
       );
 
-      const data = await res.json();
-
       if (!res.ok) {
-        throw new Error(data.message || "Request failed");
+        setErrors({
+          email: "Email or password incorrect",
+          password: "Email or password incorrect",
+        });
+        return;
       }
 
       setEmail("");
@@ -194,7 +200,11 @@ export default function SignInPage() {
               placeholder="Enter your email..."
               autoComplete="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              error={errors.email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setErrors((prev) => ({ ...prev, email: "" }));
+              }}
             />
             <Input
               id="password"
@@ -203,7 +213,11 @@ export default function SignInPage() {
               placeholder="••••••••"
               autoComplete="current-password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              error={errors.password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setErrors((prev) => ({ ...prev, password: "" }));
+              }}
               rightElement={
                 <button
                   type="button"
@@ -238,6 +252,7 @@ export default function SignInPage() {
           <Button
             type="submit"
             variant="primary"
+            disabled={loading}
             fullWidth
             className="mb-6 py-3 text-sm tracking-widest uppercase cursor-pointer"
           >

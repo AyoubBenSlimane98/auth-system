@@ -145,16 +145,10 @@ export default function SignUpPage() {
         } catch {
           throw new Error("Invalid server response");
         }
-        if (!res.ok) {
-          throw new Error(data.message || "Request failed");
-        }
         if (!data.status) {
           throw new Error(data.message || "Signup failed");
         }
-        console.log(data);
-        if (!data.status) {
-          throw new Error(data.message || "Signup failed");
-        }
+
         localStorage.setItem("email", data.data.email);
         setSuccessMessage(
           `Welcome ${form.firstName}!  Check "${form.email}" for verification link.`,
