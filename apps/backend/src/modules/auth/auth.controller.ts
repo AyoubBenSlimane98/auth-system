@@ -1,17 +1,62 @@
-import { Body, Controller, Post, Query, Req, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Query,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthService } from './services/auth.service';
 import { ConfigService } from '@nestjs/config';
 import { Public } from '../../common/decorators';
-import { LocalSignInDto, LocalSignUpDto, ResetPasswordDto } from './dtos';
+import {
+  GoogleDto,
+  LocalSignInDto,
+  LocalSignUpDto,
+  ResetPasswordDto,
+} from './dtos';
 import type { Request, Response } from 'express';
 import { CookieUtil } from './utils';
 import type { AuthRequest, JwtCookies } from '../../common/types';
+import { GoogleGuard } from './guards';
+import { AppType } from '../../configuration/types';
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly config: ConfigService,
   ) {}
+
+  @Public()
+  @UseGuards(GoogleGuard)
+  @Get('google')
+  async googleAuth() {}
+
+  @Public()
+  @UseGuards(GoogleGuard)
+  @Get('google/callback')
+  async googleAuthRedirect(@Req() req: Request, @Res() res: Response) {
+    const data = req.user as GoogleDto;
+    const userAgent = req.headers['user-agent'] || 'unknown-device';
+    const ip = req.ip || req.socket.remoteAddress || 'unknown-ip';
+    console.log({ data, userAgent, ip });
+    const redirect = this.config.getOrThrow<AppType>('app').redirectUrl;
+    const result = await this.authService.googleAuthRedirect(
+      data,
+      userAgent,
+      ip,
+    );
+
+    CookieUtil.setAuthCookies(res, result);
+    return res.status(302).redirect(redirect);
+  }
+  @Public()
+  @Post('signup')
+  async localSignUp(@Body() body: LocalSignUpDto) {
+    return this.authService.localSignUp(body);
+  }
 
   @Public()
   @Post('signin')
@@ -31,12 +76,6 @@ export class AuthController {
         provider_id: result.data.provider_id,
       },
     };
-  }
-
-  @Public()
-  @Post('signup')
-  async localSignUp(@Body() body: LocalSignUpDto) {
-    return this.authService.localSignUp(body);
   }
 
   @Public()

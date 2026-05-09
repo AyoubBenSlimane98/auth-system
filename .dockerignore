@@ -1,12 +1,17 @@
 node_modules
+apps/*/node_modules
+packages/*/node_modules
+
 dist
 build
 .next
+.turbo
 
 .git
 .docker
 
 npm-debug.log
 pnpm-debug.log
+
 Dockerfile
-docker-compose.yml
+docker-compose.*

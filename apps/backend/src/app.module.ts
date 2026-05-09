@@ -5,6 +5,7 @@ import {
   appConfig,
   argon2Config,
   databaseConfig,
+  googleConfig,
   jwtConfig,
   sendGridConfig,
 } from './configuration';
@@ -29,6 +30,7 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
         sendGridConfig,
         appConfig,
         argon2Config,
+        googleConfig,
       ],
       envFilePath: `.env.${process.env.NODE_ENV}`,
       expandVariables: true,

@@ -9,7 +9,7 @@ import { ProvidersModule } from '../providers/providers.module';
 import { SessionsModule } from '../sessions/sessions.module';
 import { UsersModule } from '../users/users.module';
 import { TokensModule } from '../tokens/tokens.module';
-import { JwtAuthStrategy } from './strategies';
+import { GoogleStrategy, JwtAuthStrategy } from './strategies';
 import { SendGridService } from './services/sendgrid.service';
 import { Argon2Service } from './services/argon2.service';
 
@@ -40,6 +40,7 @@ import { Argon2Service } from './services/argon2.service';
     JwtAuthStrategy,
     SendGridService,
     Argon2Service,
+    GoogleStrategy,
   ],
 })
 export class AuthModule {}

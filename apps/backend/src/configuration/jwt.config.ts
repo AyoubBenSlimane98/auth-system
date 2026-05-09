@@ -18,14 +18,18 @@ export const jwtConfig = registerAs('jwt', () => {
     auth: {
       privateKey: read(fromRoot('secrets/auth/private.pem')),
       publicKey: read(fromRoot('secrets/auth/public.pem')),
+      access_token_ttl: process.env.ACCESS_TOKEN_EXPIRES_IN,
+      refresh_token_ttl: process.env.REFRESH_TOKEN_EXPIRES_IN,
     },
     email: {
       privateKey: read(fromRoot('secrets/email/private.pem')),
       publicKey: read(fromRoot('secrets/email/public.pem')),
+      expiresIn: process.env.EMAIL_TOKEN_EXPIRES_IN,
     },
     reset: {
       privateKey: read(fromRoot('secrets/reset/private.pem')),
       publicKey: read(fromRoot('secrets/reset/public.pem')),
+      expiresIn: process.env.RESET_TOKEN_EXPIRES_IN,
     },
   };
 });

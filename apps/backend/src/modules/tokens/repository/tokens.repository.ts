@@ -26,11 +26,14 @@ export class TokensRepository {
     const jwt = this.config.getOrThrow<JwtType>('jwt');
     const expires_at = new Date(Date.now() + ms(jwt.auth.refresh_token_ttl));
 
-    await db.insert(tokens).values({
-      session_id: data.session_id,
-      token_hash: data.token_hash,
-      expires_at,
-    });
+    await db
+      .insert(tokens)
+      .values({
+        session_id: data.session_id,
+        token_hash: data.token_hash,
+        expires_at,
+      })
+      .returning({ token_id: tokens.token_id });
   }
 
   async findLatestRefreshTokenBySession(session_id: string) {

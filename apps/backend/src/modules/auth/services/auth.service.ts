@@ -12,6 +12,7 @@ import { TokensRepository } from '../../tokens/repository/tokens.repository';
 import { DATABASE_CONNECTION } from '../../../database/constants';
 import { ProviderEnum } from '../../providers/enums/providers.enum';
 import {
+  GoogleDto,
   LocalSignInDto,
   LocalSignUpDto,
   ResetPasswordDto,
@@ -76,6 +77,58 @@ export class AuthService {
       message: 'Created new user successfully',
       data: result,
     };
+  }
+
+  async googleAuthRedirect(data: GoogleDto, userAgent: string, ip: string) {
+    return await this.db.transaction(async (tx) => {
+      let user = await this.usersRepo.findByEmail(data.email, tx);
+
+      if (!user) {
+        await this.usersRepo.createUserIfNotExists(
+          {
+            first_name: data.first_name ?? 'user',
+            last_name: data.last_name ?? 'user',
+            email: data.email,
+            avatar_url: data.avatar_url ?? undefined,
+          },
+          tx,
+        );
+
+        user = await this.usersRepo.findByEmail(data.email, tx);
+      }
+
+      if (!user) {
+        throw new AppException({
+          message: 'Failed to create or find user 1',
+          code: ErrorCode.INTERNAL_SERVER_ERROR,
+          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        });
+      }
+
+      let provider = await this.providersRepo.createProviderIfNotExists(
+        {
+          user_id: user.user_id,
+          type: data.type,
+          provider_user_id: data.provider_user_id,
+        },
+        tx,
+      );
+      if (!provider) {
+        provider = await this.providersRepo.findByProviderUserId(
+          data.provider_user_id,
+          tx,
+        );
+      }
+      const tokens = await this.storeTokens(
+        {
+          provider_id: provider.provider_id,
+          user_agent: userAgent,
+          ip_address: ip,
+        },
+        tx,
+      );
+      return tokens;
+    });
   }
 
   async verificationEmail(token: string) {
@@ -416,7 +469,6 @@ export class AuthService {
     const refresh_token = this.jwtAuthService.generateRefreshToken();
 
     const hashedToken = await this.argon2Service.hashData(refresh_token);
-
     const session = await db.transaction(async (innerTx: DbTx) => {
       const session = await this.sessionsRepo.createSession(
         {
@@ -434,7 +486,6 @@ export class AuthService {
           code: ErrorCode.INTERNAL_SERVER_ERROR,
         });
       }
-
       await this.refreshTokenRepo.createRefreshToken(
         {
           session_id: session.session_id,
@@ -442,7 +493,6 @@ export class AuthService {
         },
         innerTx,
       );
-
       return session;
     });
 
