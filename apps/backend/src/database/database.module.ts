@@ -1,17 +1,19 @@
-import { Inject, Module, OnApplicationShutdown } from '@nestjs/common';
+import { Global, Inject, Module, OnApplicationShutdown } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Pool } from 'pg';
 import { DatabaseType } from '../configuration/types';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { DATABASE_CONNECTION, DATABASE_POOL } from './constants';
 import * as tables from './schema';
-
+@Global()
 @Module({
   providers: [
     {
       provide: DATABASE_POOL,
+      inject: [ConfigService],
       useFactory: (config: ConfigService) => {
         const db = config.getOrThrow<DatabaseType>('database');
+
         const pool = new Pool({
           connectionString: db.url,
           max: 20,

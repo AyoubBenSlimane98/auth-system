@@ -11,6 +11,7 @@ import { UsersModule } from '../users/users.module';
 import { TokensModule } from '../tokens/tokens.module';
 import { JwtAuthStrategy } from './strategies';
 import { SendGridService } from './services/sendgrid.service';
+import { Argon2Service } from './services/argon2.service';
 
 @Module({
   imports: [
@@ -33,6 +34,12 @@ import { SendGridService } from './services/sendgrid.service';
     TokensModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtAuthService, JwtAuthStrategy, SendGridService],
+  providers: [
+    AuthService,
+    JwtAuthService,
+    JwtAuthStrategy,
+    SendGridService,
+    Argon2Service,
+  ],
 })
 export class AuthModule {}

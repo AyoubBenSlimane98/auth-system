@@ -5,52 +5,27 @@ import { join } from 'path';
 export const jwtConfig = registerAs('jwt', () => {
   const fromRoot = (...paths: string[]) =>
     join(process.cwd(), '../../', ...paths);
-  const read = (secretName: string, localPath: string) => {
-    const dockerPath = `/run/secrets/${secretName}`;
-    if (fs.existsSync(dockerPath)) {
-      return fs.readFileSync(dockerPath, 'utf8');
-    }
+
+  const read = (localPath: string) => {
     if (fs.existsSync(localPath)) {
       return fs.readFileSync(localPath, 'utf8');
     }
-    throw new Error(`Missing key: ${secretName}`);
+
+    throw new Error(`Missing key: ${localPath}`);
   };
+
   return {
     auth: {
-      privateKey: read(
-        'auth_jwt_private_key',
-        fromRoot('secrets/auth/private.key'),
-      ),
-      publicKey: read(
-        'auth_jwt_public_key',
-        fromRoot('secrets/auth/public.key'),
-      ),
-      access_token_ttl: process.env.ACCESS_TOKEN_EXPIRES_IN,
-      refresh_token_ttl: process.env.REFRESH_TOKEN_EXPIRES_IN,
+      privateKey: read(fromRoot('secrets/auth/private.pem')),
+      publicKey: read(fromRoot('secrets/auth/public.pem')),
     },
-
     email: {
-      privateKey: read(
-        'email_jwt_private_key',
-        fromRoot('secrets/email/private.key'),
-      ),
-      publicKey: read(
-        'email_jwt_public_key',
-        fromRoot('secrets/email/public.key'),
-      ),
-      expiresIn: process.env.EMAIL_TOKEN_EXPIRES_IN,
+      privateKey: read(fromRoot('secrets/email/private.pem')),
+      publicKey: read(fromRoot('secrets/email/public.pem')),
     },
-
     reset: {
-      privateKey: read(
-        'reset_jwt_private_key',
-        fromRoot('secrets/reset/private.key'),
-      ),
-      publicKey: read(
-        'reset_jwt_public_key',
-        fromRoot('secrets/reset/public.key'),
-      ),
-      expiresIn: process.env.RESET_TOKEN_EXPIRES_IN,
+      privateKey: read(fromRoot('secrets/reset/private.pem')),
+      publicKey: read(fromRoot('secrets/reset/public.pem')),
     },
   };
 });
