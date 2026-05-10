@@ -8,6 +8,7 @@ import {
   googleConfig,
   jwtConfig,
   sendGridConfig,
+  twitterConfig,
 } from './configuration';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
@@ -31,6 +32,7 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
         appConfig,
         argon2Config,
         googleConfig,
+        twitterConfig,
       ],
       envFilePath: `.env.${process.env.NODE_ENV}`,
       expandVariables: true,

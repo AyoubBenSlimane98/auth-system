@@ -16,12 +16,14 @@ import {
   LocalSignInDto,
   LocalSignUpDto,
   ResetPasswordDto,
+  TwitterDto,
 } from './dtos';
 import type { Request, Response } from 'express';
 import { CookieUtil } from './utils';
 import type { AuthRequest, JwtCookies } from '../../common/types';
-import { GoogleGuard } from './guards';
+import { GoogleGuard, TwitterGuard } from './guards';
 import { AppType } from '../../configuration/types';
+
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -35,23 +37,26 @@ export class AuthController {
   async googleAuth() {}
 
   @Public()
+  @UseGuards(TwitterGuard)
+  @Get('twitter')
+  async twitterAuth() {}
+
+  @Public()
   @UseGuards(GoogleGuard)
   @Get('google/callback')
   async googleAuthRedirect(@Req() req: Request, @Res() res: Response) {
-    const data = req.user as GoogleDto;
-    const userAgent = req.headers['user-agent'] || 'unknown-device';
-    const ip = req.ip || req.socket.remoteAddress || 'unknown-ip';
-    console.log({ data, userAgent, ip });
-    const redirect = this.config.getOrThrow<AppType>('app').redirectUrl;
-    const result = await this.authService.googleAuthRedirect(
-      data,
-      userAgent,
-      ip,
-    );
-
-    CookieUtil.setAuthCookies(res, result);
-    return res.status(302).redirect(redirect);
+    const data = await this.socialAuthRedirect(req);
+    return await this.authService.googleAuthRedirect(data, res);
   }
+
+  @Public()
+  @UseGuards(TwitterGuard)
+  @Get('twitter/callback')
+  async twitterAuthRedirect(@Req() req: Request, @Res() res: Response) {
+    const data = await this.socialAuthRedirect(req);
+    return await this.authService.twitterAuthRedirect(data, res);
+  }
+
   @Public()
   @Post('signup')
   async localSignUp(@Body() body: LocalSignUpDto) {
@@ -122,5 +127,13 @@ export class AuthController {
   @Post('reset-password')
   async resetPassword(@Body() body: ResetPasswordDto) {
     return this.authService.resetPassword(body);
+  }
+
+  private async socialAuthRedirect(req: Request) {
+    const data = req.user as GoogleDto | TwitterDto;
+    const userAgent = req.headers['user-agent'] || 'unknown-device';
+    const ip = req.ip || req.socket.remoteAddress || 'unknown-ip';
+    const redirect_url = this.config.getOrThrow<AppType>('app').redirectUrl;
+    return { data, userAgent, ip, redirect_url };
   }
 }

@@ -16,8 +16,11 @@ import {
   LocalSignInDto,
   LocalSignUpDto,
   ResetPasswordDto,
+  TwitterDto,
 } from '../dtos';
-
+import type { Response } from 'express';
+import { ConfigService } from '@nestjs/config';
+import { CookieUtil } from '../utils';
 @Injectable()
 export class AuthService {
   constructor(
@@ -30,6 +33,7 @@ export class AuthService {
     private readonly argon2Service: Argon2Service,
     private readonly jwtAuthService: JwtAuthService,
     private readonly sendGridService: SendGridService,
+    private readonly config: ConfigService,
   ) {}
 
   async localSignUp(body: LocalSignUpDto) {
@@ -79,56 +83,31 @@ export class AuthService {
     };
   }
 
-  async googleAuthRedirect(data: GoogleDto, userAgent: string, ip: string) {
-    return await this.db.transaction(async (tx) => {
-      let user = await this.usersRepo.findByEmail(data.email, tx);
-
-      if (!user) {
-        await this.usersRepo.createUserIfNotExists(
-          {
-            first_name: data.first_name ?? 'user',
-            last_name: data.last_name ?? 'user',
-            email: data.email,
-            avatar_url: data.avatar_url ?? undefined,
-          },
-          tx,
-        );
-
-        user = await this.usersRepo.findByEmail(data.email, tx);
-      }
-
-      if (!user) {
-        throw new AppException({
-          message: 'Failed to create or find user 1',
-          code: ErrorCode.INTERNAL_SERVER_ERROR,
-          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-        });
-      }
-
-      let provider = await this.providersRepo.createProviderIfNotExists(
-        {
-          user_id: user.user_id,
-          type: data.type,
-          provider_user_id: data.provider_user_id,
-        },
-        tx,
-      );
-      if (!provider) {
-        provider = await this.providersRepo.findByProviderUserId(
-          data.provider_user_id,
-          tx,
-        );
-      }
-      const tokens = await this.storeTokens(
-        {
-          provider_id: provider.provider_id,
-          user_agent: userAgent,
-          ip_address: ip,
-        },
-        tx,
-      );
-      return tokens;
-    });
+  async twitterAuthRedirect(
+    data: {
+      data: TwitterDto;
+      userAgent: string;
+      ip: string;
+      redirect_url: string;
+    },
+    res: Response,
+  ) {
+    const result = await this.socialAuth(data.data, data.userAgent, data.ip);
+    CookieUtil.setAuthCookies(res, result);
+    res.redirect(data.redirect_url);
+  }
+  async googleAuthRedirect(
+    data: {
+      data: GoogleDto;
+      userAgent: string;
+      ip: string;
+      redirect_url: string;
+    },
+    res: Response,
+  ) {
+    const result = await this.socialAuth(data.data, data.userAgent, data.ip);
+    CookieUtil.setAuthCookies(res, result);
+    res.redirect(data.redirect_url);
   }
 
   async verificationEmail(token: string) {
@@ -506,5 +485,62 @@ export class AuthService {
       access_token,
       session_id: session.session_id,
     };
+  }
+
+  private async socialAuth(
+    data: GoogleDto | TwitterDto,
+    userAgent: string,
+    ip: string,
+  ) {
+    return this.db.transaction(async (tx) => {
+      let user = await this.usersRepo.findByEmail(data.email, tx);
+
+      if (!user) {
+        await this.usersRepo.createUserIfNotExists(
+          {
+            first_name: data.first_name ?? 'user',
+            last_name: data.last_name ?? 'user',
+            email: data.email,
+            avatar_url: data.avatar_url ?? undefined,
+          },
+          tx,
+        );
+
+        user = await this.usersRepo.findByEmail(data.email, tx);
+      }
+
+      if (!user) {
+        throw new AppException({
+          message: 'Failed to create or find user',
+          code: ErrorCode.INTERNAL_SERVER_ERROR,
+          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        });
+      }
+
+      let provider = await this.providersRepo.createProviderIfNotExists(
+        {
+          user_id: user.user_id,
+          type: data.type,
+          provider_user_id: data.provider_user_id,
+        },
+        tx,
+      );
+
+      if (!provider) {
+        provider = await this.providersRepo.findByProviderUserId(
+          data.provider_user_id,
+          tx,
+        );
+      }
+
+      return this.storeTokens(
+        {
+          provider_id: provider.provider_id,
+          user_agent: userAgent,
+          ip_address: ip,
+        },
+        tx,
+      );
+    });
   }
 }

@@ -9,12 +9,14 @@ import { ProvidersModule } from '../providers/providers.module';
 import { SessionsModule } from '../sessions/sessions.module';
 import { UsersModule } from '../users/users.module';
 import { TokensModule } from '../tokens/tokens.module';
-import { GoogleStrategy, JwtAuthStrategy } from './strategies';
+import { GoogleStrategy, JwtAuthStrategy, TwitterStrategy } from './strategies';
 import { SendGridService } from './services/sendgrid.service';
 import { Argon2Service } from './services/argon2.service';
+import { PassportModule } from '@nestjs/passport';
 
 @Module({
   imports: [
+    PassportModule.register({ session: false, property: 'user' }),
     JwtModule.registerAsync({
       global: true,
       inject: [ConfigService],
@@ -41,6 +43,7 @@ import { Argon2Service } from './services/argon2.service';
     SendGridService,
     Argon2Service,
     GoogleStrategy,
+    TwitterStrategy,
   ],
 })
 export class AuthModule {}

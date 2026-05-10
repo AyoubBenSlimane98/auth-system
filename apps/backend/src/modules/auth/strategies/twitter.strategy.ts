@@ -1,30 +1,29 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { Profile, Strategy } from 'passport-google-oauth20';
+import { Profile, Strategy } from 'passport-twitter';
 import { STRATEGIES } from './constants';
 import { ConfigService } from '@nestjs/config';
-import { GoogleType } from '../../../configuration/types';
+import { TwitterType } from '../../../configuration/types';
 import { ProviderEnum } from '../../providers/enums/providers.enum';
-import { GoogleTypes } from '../../../common/types';
+import { TwitterTypes } from '../../../common/types';
 
 @Injectable()
-export class GoogleStrategy extends PassportStrategy(
+export class TwitterStrategy extends PassportStrategy(
   Strategy,
-  STRATEGIES.GOOGLE,
+  STRATEGIES.TWITTER,
 ) {
   constructor(private readonly config: ConfigService) {
-    const google = config.getOrThrow<GoogleType>('google');
+    const twitter = config.getOrThrow<TwitterType>('twitter');
     super({
-      clientID: google.clientID,
-      clientSecret: google.clientSecret,
-      callbackURL: google.callbackURL,
-      scope: ['email', 'profile'],
+      consumerKey: twitter.key,
+      consumerSecret: twitter.secret,
+      callbackURL: twitter.callback_url,
     });
   }
-  validate(_: string, __: string, profile: Profile): GoogleTypes {
+  validate(_: string, __: string, profile: Profile): TwitterTypes {
     const email = profile.emails?.[0]?.value ?? null;
     if (!email) {
-      throw new Error('Google account has no email');
+      throw new Error('Twitter account has no email');
     }
     return {
       email,
@@ -32,7 +31,7 @@ export class GoogleStrategy extends PassportStrategy(
       first_name: profile.name?.givenName || undefined,
       last_name: profile.name?.familyName || undefined,
       avatar_url: profile.photos?.[0]?.value || undefined,
-      type: ProviderEnum.GOOGLE,
+      type: ProviderEnum.TWITTER,
     };
   }
 }

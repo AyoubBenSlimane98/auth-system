@@ -1,2 +1,3 @@
 export * from './jwt-auth.guard';
 export * from './google.guard';
+export * from './twitter.guard';
