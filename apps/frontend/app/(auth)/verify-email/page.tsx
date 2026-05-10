@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Card from "../../components/Card";
 import Button from "../../components/Button";
-
+import { jwtDecode } from "jwt-decode";
 
 const CheckCircleIcon = () => (
   <svg
@@ -64,7 +64,6 @@ const ArrowRightIcon = () => (
   </svg>
 );
 
-
 type Status = "loading" | "success" | "error";
 
 const STATUS_CONFIG: Record<
@@ -107,7 +106,6 @@ const STATUS_CONFIG: Record<
     badgeClass: "bg-rose-500/10 text-rose-400 border-rose-500/20",
   },
 };
-
 
 const steps = ["Create account", "Verify email", "Get started"];
 
@@ -179,6 +177,8 @@ export default function VerifyEmailPage() {
   const token = searchParams.get("token");
   const [status, setStatus] = useState<Status>("loading");
   const [countdown, setCountdown] = useState(3);
+  const [resending, setResending] = useState(false);
+  const [resendMessage, setResendMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const verifyEmail = async () => {
@@ -189,7 +189,7 @@ export default function VerifyEmailPage() {
       try {
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/auth/verify-email?token=${token}`,
-          { method: "POST" },
+          { method: "POST", headers: { "Content-Type": "application/json" } },
         );
         if (!res.ok) throw new Error();
         setStatus("success");
@@ -216,10 +216,44 @@ export default function VerifyEmailPage() {
   }, [status, router]);
 
   const cfg = STATUS_CONFIG[status];
+  const handleResend = async () => {
+    try {
+      if (!token) return;
 
+      const { email } = jwtDecode(token) as { email: string };
+
+      setResending(true);
+      setResendMessage(null);
+
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/resend-verification`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        },
+      );
+
+      if (!res.ok) throw new Error();
+
+      setResendMessage("Verification email has been sent!");
+    } catch {
+      setResendMessage("Failed to resend email. Try again.");
+    } finally {
+      setResending(false);
+    }
+  };
+  useEffect(() => {
+    if (!resendMessage) return;
+
+    const t = setTimeout(() => {
+      setResendMessage(null);
+    }, 4000);
+
+    return () => clearTimeout(t);
+  }, [resendMessage]);
   return (
     <main className="relative min-h-screen overflow-hidden bg-zinc-950 flex flex-col items-center justify-center px-4 py-12">
-
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
@@ -240,13 +274,11 @@ export default function VerifyEmailPage() {
       />
 
       <Card className="w-full max-w-120 z-10 animate-fade-in">
-
         <div className="flex justify-center mb-8">
           <StepTrail status={status} />
         </div>
 
         <div className="mb-6 flex flex-col items-center gap-4">
-
           <div className="relative flex items-center justify-center">
             <div
               className={`absolute h-24 w-24 rounded-full blur-2xl ${cfg.glowClass} transition-all duration-700`}
@@ -321,6 +353,25 @@ export default function VerifyEmailPage() {
             <p className="text-xs text-zinc-600">
               Please do not close this tab
             </p>
+          </div>
+        )}
+        {status === "error" && (
+          <div className="mt-4">
+            <Button
+              type="button"
+              variant="ghost"
+              fullWidth
+              disabled={resending}
+              onClick={handleResend}
+              className="cursor-pointer group flex items-center justify-center gap-2 py-3 text-sm font-medium tracking-widest uppercase"
+            >
+              {resending ? "Resending..." : "Resend verification email"}
+            </Button>
+            {resendMessage && (
+              <div className="mt-4 rounded-xl border border-white/10 bg-zinc-900/60 p-3 text-center text-xs text-zinc-300 animate-fade-in">
+                {resendMessage}
+              </div>
+            )}
           </div>
         )}
       </Card>
