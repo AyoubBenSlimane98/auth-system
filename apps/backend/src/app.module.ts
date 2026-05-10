@@ -7,6 +7,7 @@ import {
   databaseConfig,
   googleConfig,
   jwtConfig,
+  redisConfig,
   sendGridConfig,
   twitterConfig,
 } from './configuration';
@@ -19,6 +20,8 @@ import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { JwtAuthGuard } from './modules/auth/guards';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import { RedisModule } from './infrastructure/redis/redis.module';
+import { RateLimitGuard } from './common/guards/rate-limit.guard';
 
 @Module({
   imports: [
@@ -33,6 +36,7 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
         argon2Config,
         googleConfig,
         twitterConfig,
+        redisConfig,
       ],
       envFilePath: `.env.${process.env.NODE_ENV}`,
       expandVariables: true,
@@ -43,6 +47,7 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
     ProvidersModule,
     SessionsModule,
     TokensModule,
+    RedisModule,
   ],
   providers: [
     {
@@ -67,6 +72,7 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
       }),
     },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: RateLimitGuard },
     { provide: APP_INTERCEPTOR, useClass: ResponseInterceptor },
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },
   ],

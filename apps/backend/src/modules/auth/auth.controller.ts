@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './services/auth.service';
 import { ConfigService } from '@nestjs/config';
-import { Public } from '../../common/decorators';
+import { Public, RateLimit } from '../../common/decorators';
 import {
   GoogleDto,
   LocalSignInDto,
@@ -32,16 +32,19 @@ export class AuthController {
   ) {}
 
   @Public()
+  @RateLimit({ limit: 20, ttl: 60 })
   @UseGuards(GoogleGuard)
   @Get('google')
   async googleAuth() {}
 
   @Public()
+  @RateLimit({ limit: 20, ttl: 60 })
   @UseGuards(TwitterGuard)
   @Get('twitter')
   async twitterAuth() {}
 
   @Public()
+  @RateLimit({ limit: 10, ttl: 60 })
   @UseGuards(GoogleGuard)
   @Get('google/callback')
   async googleAuthRedirect(@Req() req: Request, @Res() res: Response) {
@@ -50,6 +53,7 @@ export class AuthController {
   }
 
   @Public()
+  @RateLimit({ limit: 10, ttl: 60 })
   @UseGuards(TwitterGuard)
   @Get('twitter/callback')
   async twitterAuthRedirect(@Req() req: Request, @Res() res: Response) {
@@ -58,12 +62,14 @@ export class AuthController {
   }
 
   @Public()
+  @RateLimit({ limit: 3, ttl: 300 })
   @Post('signup')
   async localSignUp(@Body() body: LocalSignUpDto) {
     return this.authService.localSignUp(body);
   }
 
   @Public()
+  @RateLimit({ limit: 5, ttl: 60 })
   @Post('signin')
   async localSignIn(
     @Req() req: Request,
@@ -84,17 +90,20 @@ export class AuthController {
   }
 
   @Public()
+  @RateLimit({ limit: 5, ttl: 300 })
   @Post('verify-email')
   async verificationEmail(@Query('token') token: string) {
     return this.authService.verificationEmail(token);
   }
 
   @Public()
+  @RateLimit({ limit: 2, ttl: 300 })
   @Post('resend-verification')
   async resendVerification(@Body() body: { email: string }) {
     return this.authService.resendVerification(body);
   }
 
+  @RateLimit({ limit: 20, ttl: 60 })
   @Post('logout')
   async logOut(
     @Req() req: AuthRequest,
@@ -106,6 +115,7 @@ export class AuthController {
     return result;
   }
 
+  @RateLimit({ limit: 30, ttl: 60 })
   @Post('refresh')
   async refresh(
     @Req() req: AuthRequest,
@@ -118,12 +128,14 @@ export class AuthController {
   }
 
   @Public()
+  @RateLimit({ limit: 3, ttl: 300 })
   @Post('forgot-password')
   async fogotPassword(@Body() body: { email: string }) {
     return this.authService.fogotPassword(body);
   }
 
   @Public()
+  @RateLimit({ limit: 5, ttl: 300 })
   @Post('reset-password')
   async resetPassword(@Body() body: ResetPasswordDto) {
     return this.authService.resetPassword(body);

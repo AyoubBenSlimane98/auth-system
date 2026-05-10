@@ -5,3 +5,4 @@ export * from './app.type';
 export * from './argon2.type';
 export * from './google.type';
 export * from './twitter.type';
+export * from './redis.type';

@@ -77,6 +77,7 @@ export class AuthService {
         last_name: body.lastName,
       };
     });
+    await this.sendEmailVerifyAccount(result.provider_id, body.email);
     return {
       message: 'Created new user successfully',
       data: result,
@@ -177,7 +178,7 @@ export class AuthService {
       };
     }
 
-    await this.sendTokenByEmail(provider.provider_id, body.email);
+    await this.sendEmailVerifyAccount(provider.provider_id, body.email);
 
     return {
       message: 'Verification email sent successfully',
@@ -429,7 +430,7 @@ export class AuthService {
     };
   }
 
-  private async sendTokenByEmail(provider_id: string, email: string) {
+  private async sendEmailVerifyAccount(provider_id: string, email: string) {
     const token =
       await this.jwtAuthService.generateVerifyEmailToken(provider_id);
     await this.sendGridService.sendEmailVerifyAccount(email, token);

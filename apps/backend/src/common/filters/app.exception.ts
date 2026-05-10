@@ -5,16 +5,16 @@ type AppExceptionOptions<T = unknown> = {
   message: string;
   statusCode?: HttpStatus;
   code?: ErrorCode;
-  data?: T;
+  data?: T | null;
 };
 
-export class AppException extends HttpException {
+export class AppException<T = unknown> extends HttpException {
   constructor({
     message,
     statusCode = HttpStatus.BAD_REQUEST,
     code = ErrorCode.APP_ERROR,
     data = null,
-  }: AppExceptionOptions) {
+  }: AppExceptionOptions<T>) {
     super(
       {
         message,
