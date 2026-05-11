@@ -7,7 +7,6 @@ import { UsersRepository } from '../../users/repository/users.repository';
 import { ProvidersRepository } from '../../providers/repository/providers.repository';
 import { Argon2Service } from './argon2.service';
 import { JwtAuthService } from './jwt-auth.service';
-import { SendGridService } from './sendgrid.service';
 import { TokensRepository } from '../../tokens/repository/tokens.repository';
 import { DATABASE_CONNECTION } from '../../../database/constants';
 import { ProviderEnum } from '../../providers/enums/providers.enum';
@@ -21,18 +20,21 @@ import {
 import type { Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { CookieUtil } from '../utils';
+import { InjectQueue } from '@nestjs/bullmq';
+import { EMAIL_QUEUE } from '../../../infrastructure/queue/constants';
+import { Queue } from 'bullmq';
 @Injectable()
 export class AuthService {
   constructor(
     @Inject(DATABASE_CONNECTION)
     private readonly db: DB,
+    @InjectQueue(EMAIL_QUEUE) private readonly emailQueue: Queue,
     private readonly refreshTokenRepo: TokensRepository,
     private readonly sessionsRepo: SessionsRepository,
     private readonly usersRepo: UsersRepository,
     private readonly providersRepo: ProvidersRepository,
     private readonly argon2Service: Argon2Service,
     private readonly jwtAuthService: JwtAuthService,
-    private readonly sendGridService: SendGridService,
     private readonly config: ConfigService,
   ) {}
 
@@ -371,7 +373,17 @@ export class AuthService {
       const token = await this.jwtAuthService.generateResetPasswordToken(
         user.user_id,
       );
-      await this.sendGridService.sendEmailResetPassword(body.email, token);
+      await this.emailQueue.add(
+        'reset-password',
+        { email: body.email, token },
+        {
+          attempts: 3,
+          jobId: `reset-password-${provider.provider_id}`,
+          backoff: { type: 'exponential', delay: 5000 },
+          removeOnComplete: { age: 180, count: 5 },
+          removeOnFail: 10,
+        },
+      );
     }
 
     return {
@@ -431,9 +443,21 @@ export class AuthService {
   }
 
   private async sendEmailVerifyAccount(provider_id: string, email: string) {
-    const token =
-      await this.jwtAuthService.generateVerifyEmailToken(provider_id);
-    await this.sendGridService.sendEmailVerifyAccount(email, token);
+    const token = await this.jwtAuthService.generateVerifyEmailToken(
+      provider_id,
+      email,
+    );
+    await this.emailQueue.add(
+      'verify-email',
+      { email, token },
+      {
+        attempts: 3,
+        jobId: `verify-email-${provider_id}`,
+        backoff: { type: 'exponential', delay: 5000 },
+        removeOnComplete: { age: 180, count: 5 },
+        removeOnFail: 10,
+      },
+    );
   }
 
   private async storeTokens(

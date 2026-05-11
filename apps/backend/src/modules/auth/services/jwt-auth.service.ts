@@ -24,11 +24,11 @@ export class JwtAuthService {
     private readonly config: ConfigService,
   ) {}
 
-  async generateVerifyEmailToken(provider_id: string) {
+  async generateVerifyEmailToken(provider_id: string, email: string) {
     const jwt = this.config.getOrThrow<JwtType>('jwt');
     const jti = randomUUID();
     return this.jwtService.signAsync(
-      { sub: provider_id, type: 'verify_email', jti },
+      { sub: provider_id, type: 'verify_email', jti, email },
       {
         privateKey: jwt.email.privateKey,
         expiresIn: jwt.email.expiresIn,

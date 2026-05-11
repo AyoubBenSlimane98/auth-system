@@ -22,6 +22,7 @@ import { ResponseInterceptor } from './common/interceptors/response.interceptor'
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { RedisModule } from './infrastructure/redis/redis.module';
 import { RateLimitGuard } from './common/guards/rate-limit.guard';
+import { QueueModule } from './infrastructure/queue/queue.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { RateLimitGuard } from './common/guards/rate-limit.guard';
     SessionsModule,
     TokensModule,
     RedisModule,
+    QueueModule,
   ],
   providers: [
     {

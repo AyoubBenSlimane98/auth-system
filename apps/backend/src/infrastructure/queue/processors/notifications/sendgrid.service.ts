@@ -1,9 +1,9 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import sgMail from '@sendgrid/mail';
-import { AppException } from '../../../common/filters';
-import { ErrorCode } from '../../../common/enums';
-import { AppType, SendGridType } from '../../../configuration/types';
+import { AppType, SendGridType } from '../../../../configuration/types';
+import { AppException } from '../../../../common/filters';
+import { ErrorCode } from '../../../../common/enums';
 
 @Injectable()
 export class SendGridService {
@@ -95,6 +95,7 @@ export class SendGridService {
       });
     }
   }
+
   async sendEmailResetPassword(email: string, token: string) {
     const url = `${this.link}/reset-password?token=${token}`;
 

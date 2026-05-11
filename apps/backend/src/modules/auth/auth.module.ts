@@ -10,7 +10,6 @@ import { SessionsModule } from '../sessions/sessions.module';
 import { UsersModule } from '../users/users.module';
 import { TokensModule } from '../tokens/tokens.module';
 import { GoogleStrategy, JwtAuthStrategy, TwitterStrategy } from './strategies';
-import { SendGridService } from './services/sendgrid.service';
 import { Argon2Service } from './services/argon2.service';
 import { PassportModule } from '@nestjs/passport';
 
@@ -40,7 +39,6 @@ import { PassportModule } from '@nestjs/passport';
     AuthService,
     JwtAuthService,
     JwtAuthStrategy,
-    SendGridService,
     Argon2Service,
     GoogleStrategy,
     TwitterStrategy,
