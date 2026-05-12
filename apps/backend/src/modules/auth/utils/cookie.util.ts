@@ -1,10 +1,11 @@
-import type { Response } from 'express';
+import type { CookieOptions, Response } from 'express';
 import { JwtCookies } from '../../../common/types';
 
-const options = {
+const isProd = process.env.NODE_ENV === 'production';
+const options: CookieOptions = {
   httpOnly: true,
-  secure: true,
-  sameSite: 'none' as const,
+  secure: isProd,
+  sameSite: isProd ? 'none' : 'lax',
   path: '/',
 };
 export class CookieUtil {
