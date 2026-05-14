@@ -1,4 +1,10 @@
-import { BadRequestException, Module, ValidationPipe } from '@nestjs/common';
+import {
+  BadRequestException,
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  ValidationPipe,
+} from '@nestjs/common';
 import { DatabaseModule } from './database/database.module';
 import { ConfigModule } from '@nestjs/config';
 import {
@@ -7,7 +13,6 @@ import {
   databaseConfig,
   googleConfig,
   jwtConfig,
-  queueConfig,
   redisConfig,
   sendGridConfig,
   twitterConfig,
@@ -24,6 +29,7 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
 import { RedisModule } from './infrastructure/redis/redis.module';
 import { RateLimitGuard } from './common/guards/rate-limit.guard';
 import { QueueModule } from './infrastructure/queue/queue.module';
+import { HttpRedirectMiddleware } from './common/middlewares/http-redirect.middleware';
 
 @Module({
   imports: [
@@ -39,7 +45,6 @@ import { QueueModule } from './infrastructure/queue/queue.module';
         googleConfig,
         twitterConfig,
         redisConfig,
-        queueConfig,
       ],
       envFilePath: `.env.${process.env.NODE_ENV}`,
       expandVariables: true,
@@ -81,4 +86,8 @@ import { QueueModule } from './infrastructure/queue/queue.module';
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(HttpRedirectMiddleware).forRoutes('*')
+  }
+}

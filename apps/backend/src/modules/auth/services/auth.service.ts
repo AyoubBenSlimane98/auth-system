@@ -109,6 +109,7 @@ export class AuthService {
     res: Response,
   ) {
     const result = await this.socialAuth(data.data, data.userAgent, data.ip);
+    console.log('Result:', result);
     CookieUtil.setAuthCookies(res, result);
     res.redirect(data.redirect_url);
   }

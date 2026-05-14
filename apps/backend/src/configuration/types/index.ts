@@ -6,4 +6,4 @@ export * from './argon2.type';
 export * from './google.type';
 export * from './twitter.type';
 export * from './redis.type';
-export * from './queue.type';
+

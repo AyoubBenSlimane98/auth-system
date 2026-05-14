@@ -12,24 +12,25 @@ import { RedisService } from './redis.service';
       provide: REDIS,
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
-        const redis = config.getOrThrow<RedisType>('redis');
         const isProd = config.get<string>('NODE_ENV') === 'production';
-
-        const client = new Redis({
-          host: redis.host,
-          port: redis.port,
-          password: isProd ? redis.password : undefined,
-
-          maxRetriesPerRequest: null,
-          enableReadyCheck: true,
-          lazyConnect: false,
-        });
+        const client = isProd
+          ? new Redis(config.getOrThrow<string>('REDIS_URL'), {
+              maxRetriesPerRequest: null,
+              enableReadyCheck: false,
+            })
+          : new Redis({
+              ...config.getOrThrow<RedisType>('redis'),
+              maxRetriesPerRequest: null,
+              enableReadyCheck: true,
+            });
         client.on('connect', () => {
           console.log('[Redis] connected');
         });
+
         client.on('error', (err) => {
           console.error('[Redis] error:', err);
         });
+
         return client;
       },
     },

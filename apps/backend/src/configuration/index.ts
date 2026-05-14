@@ -6,4 +6,3 @@ export { argon2Config } from './argon2.config';
 export { googleConfig } from './google.config';
 export { twitterConfig } from './twitter.config';
 export { redisConfig } from './redis.config';
-export { queueConfig } from './queue.config';

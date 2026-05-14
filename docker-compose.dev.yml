@@ -18,8 +18,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      queue:
-        condition: service_healthy
 
     volumes:
       - .:/app
@@ -34,19 +32,6 @@ services:
 
     ports:
       - "6379:6379"
-
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  queue:
-    image: redis:7-alpine
-    container_name: queue_dev
-
-    ports:
-      - "6378:6379"
 
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]

@@ -4,9 +4,9 @@ import { JwtCookies } from '../../../common/types';
 const isProd = process.env.NODE_ENV === 'production';
 const options: CookieOptions = {
   httpOnly: true,
+  path: '/',
   secure: isProd,
   sameSite: isProd ? 'none' : 'lax',
-  path: '/',
 };
 export class CookieUtil {
   static setAuthCookies(res: Response, tokens: JwtCookies) {
