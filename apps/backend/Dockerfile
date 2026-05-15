@@ -1,33 +1,33 @@
+# -----------------------
+# BASE
+# -----------------------
 FROM node:22-alpine AS base
 
 WORKDIR /app
-RUN corepack enable
+
+RUN apk add --no-cache \
+    libc6-compat \
+    python3 \
+    make \
+    g++ \
+  && corepack enable \
+  && corepack prepare pnpm@10.33.0 --activate
+
 
 # -----------------------
-# DEV
-# -----------------------
-FROM base AS dev
-
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
-COPY apps/backend/package.json ./apps/backend/package.json
-
-RUN pnpm install
-
-COPY . .
-
-CMD ["pnpm", "--filter", "backend", "start:dev"]
-
-# -----------------------
-# PRUNE (Turbo optimization)
+# PRUNER
 # -----------------------
 FROM base AS pruner
+
+WORKDIR /app
 
 COPY . .
 
 RUN pnpm dlx turbo prune backend --docker
 
+
 # -----------------------
-# INSTALL (prod deps only)
+# INSTALL
 # -----------------------
 FROM base AS installer
 
@@ -38,27 +38,34 @@ COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
 
 RUN pnpm install --frozen-lockfile
 
+
 # -----------------------
-# BUILD
+# BUILDER
 # -----------------------
 FROM installer AS builder
+
+WORKDIR /app
 
 COPY --from=pruner /app/out/full/ .
 
 RUN pnpm --filter backend build
 
+RUN pnpm --filter backend deploy --prod /prod/backend
+
+
 # -----------------------
-# PROD
+# PRODUCTION
 # -----------------------
 FROM node:22-alpine AS prod
 
 WORKDIR /app
-RUN corepack enable
 
-COPY --from=installer /app/node_modules ./node_modules
-COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
-COPY --from=builder /app/apps/backend/package.json ./apps/backend/package.json
+RUN apk add --no-cache libc6-compat
 
-WORKDIR /app/apps/backend
+ENV NODE_ENV=production
+
+COPY --from=builder /prod/backend ./
+
+EXPOSE 10000
 
 CMD ["node", "dist/main.js"]

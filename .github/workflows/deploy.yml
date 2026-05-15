@@ -1,0 +1,42 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. checkout code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. setup node
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # 3. enable pnpm
+      - name: Enable pnpm
+        run: corepack enable
+
+      # 4. install deps
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # 5. build backend
+      - name: Build backend
+        run: pnpm --filter backend build
+
+      # 6. run migrations
+      - name: Run DB migrations
+        run: pnpm --filter backend db:migrate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      # 7. deploy to Render via Deploy Hook
+      - name: Deploy to Render
+        run: curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
