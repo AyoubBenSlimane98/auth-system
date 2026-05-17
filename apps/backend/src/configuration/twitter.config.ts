@@ -1,7 +1,7 @@
 import { registerAs } from '@nestjs/config';
 
 export const twitterConfig = registerAs('twitter', () => ({
-  key: process.env.TWITTER_CONSUMER_KEY,
-  secret: process.env.TWITTER_CONSUMER_SECRET,
+  clientID: process.env.TWITTER_CLIENT_ID,
+  clientSecret: process.env.TWITTER_CLIENT_SECRET,
   callback_url: process.env.TWITTER_CALLBACK_URL,
 }));

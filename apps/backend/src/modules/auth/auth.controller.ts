@@ -23,12 +23,15 @@ import { CookieUtil } from './utils';
 import type { AuthRequest, JwtCookies } from '../../common/types';
 import { GoogleGuard, TwitterGuard } from './guards';
 import { AppType } from '../../configuration/types';
+import { LoggerService } from '../../infrastructure/logs/logger.service';
 
 @Controller('auth')
 export class AuthController {
+  private readonly context = AuthController.name;
   constructor(
     private readonly authService: AuthService,
     private readonly config: ConfigService,
+    private readonly logger: LoggerService,
   ) {}
 
   @Public()
@@ -49,6 +52,9 @@ export class AuthController {
   @Get('google/callback')
   async googleAuthRedirect(@Req() req: Request, @Res() res: Response) {
     const data = await this.socialAuthRedirect(req);
+    this.logger.log(this.context, 'google callback', {
+      ip: data.ip,
+    });
     return await this.authService.googleAuthRedirect(data, res);
   }
 
@@ -58,6 +64,9 @@ export class AuthController {
   @Get('twitter/callback')
   async twitterAuthRedirect(@Req() req: Request, @Res() res: Response) {
     const data = await this.socialAuthRedirect(req);
+    this.logger.log(this.context, 'twitter callback', {
+      ip: data.ip,
+    });
     return await this.authService.twitterAuthRedirect(data, res);
   }
 
@@ -65,7 +74,13 @@ export class AuthController {
   @RateLimit({ limit: 3, ttl: 300 })
   @Post('signup')
   async localSignUp(@Body() body: LocalSignUpDto) {
-    return this.authService.localSignUp(body);
+    this.logger.log(this.context, 'signup attempt', { email: body.email });
+    const result = await this.authService.localSignUp(body);
+    this.logger.log(this.context, 'signup success', {
+      userId: result.data.user_id,
+      providerId: result.data.provider_id,
+    });
+    return result;
   }
 
   @Public()
@@ -78,8 +93,16 @@ export class AuthController {
   ) {
     const userAgent = req.headers['user-agent'] || 'unknown-device';
     const ip = req.ip || req.socket.remoteAddress || 'unknown-ip';
+    this.logger.log(this.context, 'signin attempt', {
+      email: body.email,
+      ip,
+    });
     const result = await this.authService.localSignIn(body, userAgent, ip);
     CookieUtil.setAuthCookies(res, result.data.cookies);
+    this.logger.log(this.context, 'signin success', {
+      userId: result.data.user_id,
+      providerId: result.data.provider_id,
+    });
     return {
       message: result.message,
       data: {
@@ -110,8 +133,14 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const { refresh_token, session_id }: JwtCookies = req.cookies;
+    this.logger.log(this.context, 'logout attempt', {
+      sessionId: session_id,
+    });
     const result = await this.authService.logOut(session_id, refresh_token);
     CookieUtil.clearAuthCookies(res);
+    this.logger.log(this.context, 'logout success', {
+      sessionId: session_id,
+    });
     return result;
   }
 
@@ -122,16 +151,22 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const { refresh_token, session_id }: JwtCookies = req.cookies;
+    this.logger.log(this.context, 'token refresh attempt', {
+      sessionId: session_id,
+    });
     const result = await this.authService.refresh(session_id, refresh_token);
     CookieUtil.setAuthCookies(res, result.data);
+    this.logger.log(this.context, 'token refresh attempt', {
+      sessionId: session_id,
+    });
     return { message: result.message };
   }
 
   @Public()
   @RateLimit({ limit: 3, ttl: 300 })
   @Post('forgot-password')
-  async fogotPassword(@Body() body: { email: string }) {
-    return this.authService.fogotPassword(body);
+  async forgotPassword(@Body() body: { email: string }) {
+    return this.authService.forgotPassword(body);
   }
 
   @Public()

@@ -1,5 +1,5 @@
 export type TwitterType = {
-  key: string;
-  secret: string;
+  clientID: string;
+  clientSecret: string;
   callback_url: string;
 };

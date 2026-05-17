@@ -5,7 +5,6 @@ import {
   NestModule,
   ValidationPipe,
 } from '@nestjs/common';
-import { DatabaseModule } from './database/database.module';
 import { ConfigModule } from '@nestjs/config';
 import {
   appConfig,
@@ -30,6 +29,8 @@ import { RedisModule } from './infrastructure/redis/redis.module';
 import { RateLimitGuard } from './common/guards/rate-limit.guard';
 import { QueueModule } from './infrastructure/queue/queue.module';
 import { HttpRedirectMiddleware } from './common/middlewares/http-redirect.middleware';
+import { LogsModule } from './infrastructure/logs/logs.module';
+import { DatabaseModule } from './infrastructure/database/database.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { HttpRedirectMiddleware } from './common/middlewares/http-redirect.middl
       envFilePath: `.env.${process.env.NODE_ENV}`,
       expandVariables: true,
     }),
+    LogsModule,
     DatabaseModule,
     AuthModule,
     UsersModule,
@@ -88,6 +90,6 @@ import { HttpRedirectMiddleware } from './common/middlewares/http-redirect.middl
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(HttpRedirectMiddleware).forRoutes('*')
+    consumer.apply(HttpRedirectMiddleware).forRoutes('*');
   }
 }

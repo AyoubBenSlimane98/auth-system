@@ -1,12 +1,11 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { eq, and, desc, inArray } from 'drizzle-orm';
-import type { DB, DbTx } from '../../../database/types';
-import { DATABASE_CONNECTION } from '../../../database/constants';
-import { tokens, sessions } from '../../../database/schema';
 import { ConfigService } from '@nestjs/config';
 import ms from 'ms';
 import { JwtType } from '../../../configuration/types';
-
+import { DATABASE_CONNECTION } from '../../../infrastructure/database/constants';
+import { tokens, sessions } from '../../../infrastructure/database/schema';
+import type { DB, DbTx } from '../../../infrastructure/database/types';
 @Injectable()
 export class TokensRepository {
   constructor(

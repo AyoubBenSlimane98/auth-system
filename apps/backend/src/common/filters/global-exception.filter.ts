@@ -8,7 +8,6 @@ import {
 import { Request, Response } from 'express';
 import { ErrorCode } from '../enums';
 
-
 function isErrorCode(value: unknown): value is ErrorCode {
   return Object.values(ErrorCode).includes(value as ErrorCode);
 }

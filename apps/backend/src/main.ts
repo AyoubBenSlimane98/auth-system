@@ -2,9 +2,15 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
+import { Logger } from 'nestjs-pino';
+import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+
+  const config = app.get(ConfigService);
+  app.useLogger(app.get(Logger));
+
   app.getHttpAdapter().getInstance().set('trust proxy', 1);
 
   app.use(
@@ -15,14 +21,14 @@ async function bootstrap() {
 
   app.use(cookieParser());
 
-  const allowedOrigin = process.env.CROSS_ORIGIN;
+  const allowedOrigin = config.getOrThrow<string>('CROSS_ORIGIN');
   app.enableCors({
     origin: allowedOrigin,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   });
 
-  const prot = Number(process.env.APP_PORT) || 3002;
+  const prot = config.get<number>('APP_PORT') || 3002;
   await app.listen(prot, '0.0.0.0');
 }
 void bootstrap();

@@ -1,14 +1,12 @@
 import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { AppException } from '../../../common/filters';
 import { ErrorCode } from '../../../common/enums';
-import type { DbTx, DB } from '../../../database/types';
 import { SessionsRepository } from '../../sessions/repository/sessions.repository';
 import { UsersRepository } from '../../users/repository/users.repository';
 import { ProvidersRepository } from '../../providers/repository/providers.repository';
 import { Argon2Service } from './argon2.service';
 import { JwtAuthService } from './jwt-auth.service';
 import { TokensRepository } from '../../tokens/repository/tokens.repository';
-import { DATABASE_CONNECTION } from '../../../database/constants';
 import { ProviderEnum } from '../../providers/enums/providers.enum';
 import {
   GoogleDto,
@@ -18,13 +16,17 @@ import {
   TwitterDto,
 } from '../dtos';
 import type { Response } from 'express';
-import { ConfigService } from '@nestjs/config';
 import { CookieUtil } from '../utils';
 import { InjectQueue } from '@nestjs/bullmq';
 import { EMAIL_QUEUE } from '../../../infrastructure/queue/constants';
 import { Queue } from 'bullmq';
+import { DATABASE_CONNECTION } from '../../../infrastructure/database/constants';
+import type { DB, DbTx } from '../../../infrastructure/database/types';
+import { LoggerService } from '../../../infrastructure/logs/logger.service';
+
 @Injectable()
 export class AuthService {
+  private readonly context = AuthService.name;
   constructor(
     @Inject(DATABASE_CONNECTION)
     private readonly db: DB,
@@ -35,10 +37,11 @@ export class AuthService {
     private readonly providersRepo: ProvidersRepository,
     private readonly argon2Service: Argon2Service,
     private readonly jwtAuthService: JwtAuthService,
-    private readonly config: ConfigService,
+    private readonly logger: LoggerService,
   ) {}
 
   async localSignUp(body: LocalSignUpDto) {
+    this.logger.log(this.context, 'signup started', { email: body.email });
     const hashPassword = await this.argon2Service.hashData(body.password);
     const result = await this.db.transaction(async (tx) => {
       await this.usersRepo.createUserIfNotExists(
@@ -51,6 +54,10 @@ export class AuthService {
       );
       const user = await this.usersRepo.findByEmail(body.email, tx);
       if (!user) {
+        this.logger.logWarn(this.context, 'Failed to create user', {
+          email: body.email,
+          reasion: 'user_not_found',
+        });
         throw new AppException({
           message: 'Failed to create user',
           statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -67,6 +74,10 @@ export class AuthService {
           tx,
         );
       if (!providerCreated) {
+        this.logger.logWarn(this.context, 'provider already exists', {
+          email: body.email,
+          reasion: 'provider_already_exists',
+        });
         throw new AppException({
           message: 'User already exists',
           statusCode: HttpStatus.CONFLICT,
@@ -80,117 +91,22 @@ export class AuthService {
       };
     });
     await this.sendEmailVerifyAccount(result.provider_id, body.email);
+    this.logger.log(this.context, 'signup completed', { email: body.email });
     return {
       message: 'Created new user successfully',
       data: result,
     };
   }
 
-  async twitterAuthRedirect(
-    data: {
-      data: TwitterDto;
-      userAgent: string;
-      ip: string;
-      redirect_url: string;
-    },
-    res: Response,
-  ) {
-    const result = await this.socialAuth(data.data, data.userAgent, data.ip);
-    CookieUtil.setAuthCookies(res, result);
-    res.redirect(data.redirect_url);
-  }
-  async googleAuthRedirect(
-    data: {
-      data: GoogleDto;
-      userAgent: string;
-      ip: string;
-      redirect_url: string;
-    },
-    res: Response,
-  ) {
-    const result = await this.socialAuth(data.data, data.userAgent, data.ip);
-    console.log('Result:', result);
-    CookieUtil.setAuthCookies(res, result);
-    res.redirect(data.redirect_url);
-  }
-
-  async verificationEmail(token: string) {
-    const payload = await this.jwtAuthService.verifyEmailToken(token);
-
-    const provider = await this.providersRepo.findByUserIdAndType(
-      payload.sub,
-      ProviderEnum.LOCAL,
-    );
-    if (!provider) {
-      throw new AppException({
-        message: 'User not found',
-        code: ErrorCode.USER_NOT_FOUND,
-        statusCode: HttpStatus.NOT_FOUND,
-      });
-    }
-    if (provider.is_email_verified) {
-      return {
-        message: 'Email already verified',
-        data: {
-          user_id: provider.user_id,
-          is_email_verified: provider.is_email_verified,
-        },
-      };
-    }
-
-    await this.providersRepo.markAccountAsVerified(
-      payload.sub,
-      ProviderEnum.LOCAL,
-    );
-    return {
-      message: 'Email verified successfully',
-      data: {
-        user_id: provider.user_id,
-        is_email_verified: provider.is_email_verified,
-      },
-    };
-  }
-
-  async resendVerification(body: { email: string }) {
-    const user = await this.usersRepo.findByEmail(body.email);
-
-    if (!user) {
-      throw new AppException({
-        message: 'User not found',
-        code: ErrorCode.USER_NOT_FOUND,
-        statusCode: HttpStatus.NOT_FOUND,
-      });
-    }
-
-    const provider = await this.providersRepo.findByUserIdAndType(
-      user.user_id,
-      ProviderEnum.LOCAL,
-    );
-
-    if (!provider) {
-      throw new AppException({
-        message: 'Provider not found',
-        code: ErrorCode.PROVIDER_NOT_FOUND,
-        statusCode: HttpStatus.NOT_FOUND,
-      });
-    }
-
-    if (provider.is_email_verified) {
-      return {
-        message: 'Email already verified',
-      };
-    }
-
-    await this.sendEmailVerifyAccount(provider.provider_id, body.email);
-
-    return {
-      message: 'Verification email sent successfully',
-    };
-  }
-
   async localSignIn(body: LocalSignInDto, userAgent: string, ip: string) {
+    this.logger.log(this.context, 'signin started', { email: body.email, ip });
     const user = await this.usersRepo.findByEmail(body.email);
     if (!user) {
+      this.logger.logWarn(this.context, 'signin failed', {
+        email: body.email,
+        ip,
+        reason: 'user_not_found',
+      });
       throw new AppException({
         message: 'Invalid email or password',
         code: ErrorCode.UNAUTHORIZED,
@@ -203,6 +119,11 @@ export class AuthService {
       ProviderEnum.LOCAL,
     );
     if (!provider || !provider.hash_password) {
+      this.logger.logWarn(this.context, 'signin failed', {
+        userId: user.user_id,
+        type: ProviderEnum.LOCAL,
+        reason: 'provider_not_found',
+      });
       throw new AppException({
         message: 'Invalid email or password',
         code: ErrorCode.USER_NOT_VERIFIED,
@@ -215,6 +136,11 @@ export class AuthService {
       body.password,
     );
     if (!isMatch) {
+      this.logger.logWarn(this.context, 'signin failed', {
+        userId: user.user_id,
+        type: ProviderEnum.LOCAL,
+        reason: 'password_mismatch',
+      });
       throw new AppException({
         message: 'Invalid email or password',
         code: ErrorCode.UNAUTHORIZED,
@@ -223,6 +149,11 @@ export class AuthService {
       });
     }
     if (!provider.is_email_verified) {
+      this.logger.logWarn(this.context, 'signin failed', {
+        userId: user.user_id,
+        type: ProviderEnum.LOCAL,
+        reason: 'email_not_verified',
+      });
       throw new AppException({
         message: 'Invalid email or password',
         code: ErrorCode.UNAUTHORIZED,
@@ -233,6 +164,9 @@ export class AuthService {
       provider_id: provider.provider_id,
       user_agent: userAgent,
       ip_address: ip,
+    });
+    this.logger.log(this.context, 'signin completed', {
+      email: body.email,
     });
     return {
       message: 'Login successful',
@@ -245,7 +179,13 @@ export class AuthService {
   }
 
   async logOut(session_id: string, refresh_token: string) {
+    this.logger.log(this.context, 'logout started', { session_id });
     if (!session_id || !refresh_token) {
+      this.logger.logError(
+        this.context,
+        'missing authentication cookies',
+        undefined,
+      );
       throw new AppException({
         message: 'Missing authentication cookies',
         code: ErrorCode.TOKEN_INVALID,
@@ -266,6 +206,9 @@ export class AuthService {
       refresh_token,
     );
     if (!isMatch) {
+      this.logger.logError(this.context, 'invalid refresh token', undefined, {
+        session_id,
+      });
       throw new AppException({
         message: 'Invalid refresh token',
         code: ErrorCode.TOKEN_INVALID,
@@ -276,14 +219,20 @@ export class AuthService {
       await this.sessionsRepo.revokeSession(session_id, tx);
       await this.refreshTokenRepo.revokeToken(oldRt.token_id, tx);
     });
-
+    this.logger.log(this.context, 'logout completed', { session_id });
     return {
       message: 'Logged out successfully',
     };
   }
 
   async refresh(session_id: string, refresh_token: string) {
+    this.logger.log(this.context, 'refresh started', { session_id });
     if (!session_id || !refresh_token) {
+      this.logger.logError(
+        this.context,
+        'missing authentication cookies',
+        undefined,
+      );
       throw new AppException({
         message: 'Missing authentication cookies',
         code: ErrorCode.TOKEN_INVALID,
@@ -294,6 +243,7 @@ export class AuthService {
     const session = await this.sessionsRepo.findById(session_id);
 
     if (!session || session.is_revoked) {
+      this.logger.logWarn(this.context, 'session invalid', { session_id });
       throw new AppException({
         message: 'Session invalid',
         code: ErrorCode.SESSION_INVALID,
@@ -305,6 +255,7 @@ export class AuthService {
       await this.refreshTokenRepo.findLatestRefreshTokenBySession(session_id);
 
     if (!oldRt || oldRt.is_revoked) {
+      this.logger.logWarn(this.context, 'token invalid', { session_id });
       throw new AppException({
         message: 'Token invalid',
         code: ErrorCode.TOKEN_INVALID,
@@ -321,6 +272,10 @@ export class AuthService {
       await this.db.transaction(async (tx) => {
         await this.sessionsRepo.revokeSession(session_id, tx);
         await this.refreshTokenRepo.revokeToken(oldRt.token_id, tx);
+      });
+      this.logger.logWarn(this.context, 'invalid refresh token', {
+        session_id,
+        reasin: 'refresh_token_not_verified',
       });
       throw new AppException({
         message: 'Invalid refresh token',
@@ -349,7 +304,7 @@ export class AuthService {
 
       await this.sessionsRepo.lastUsedSession(session_id, tx);
     });
-
+    this.logger.log(this.context, 'refresh completed', { session_id });
     return {
       message: 'Refresh token successful',
       data: {
@@ -359,9 +314,153 @@ export class AuthService {
     };
   }
 
-  async fogotPassword(body: { email: string }) {
+  async twitterAuthRedirect(
+    data: {
+      data: TwitterDto;
+      userAgent: string;
+      ip: string;
+      redirect_url: string;
+    },
+    res: Response,
+  ) {
+    this.logger.log(this.context, 'social callback started', {
+      provider: data.data.type,
+      ip: data.ip,
+      userAgent: data.userAgent,
+    });
+    const result = await this.socialAuth(data.data, data.userAgent, data.ip);
+    CookieUtil.setAuthCookies(res, result);
+    this.logger.log(this.context, 'social callback completed', {
+      provider: data.data.type,
+      ip: data.ip,
+      userAgent: data.userAgent,
+    });
+    res.redirect(data.redirect_url);
+  }
+
+  async googleAuthRedirect(
+    data: {
+      data: GoogleDto;
+      userAgent: string;
+      ip: string;
+      redirect_url: string;
+    },
+    res: Response,
+  ) {
+    this.logger.log(this.context, 'social callback started', {
+      provider: data.data.type,
+      ip: data.ip,
+      userAgent: data.userAgent,
+    });
+    const result = await this.socialAuth(data.data, data.userAgent, data.ip);
+    CookieUtil.setAuthCookies(res, result);
+    this.logger.log(this.context, 'social callback completed', {
+      provider: data.data.type,
+      ip: data.ip,
+      userAgent: data.userAgent,
+    });
+    res.redirect(data.redirect_url);
+  }
+
+  async verificationEmail(token: string) {
+    this.logger.log(this.context, 'verification email started');
+    const payload = await this.jwtAuthService.verifyEmailToken(token);
+
+    const provider = await this.providersRepo.findByUserIdAndType(
+      payload.sub,
+      ProviderEnum.LOCAL,
+    );
+    if (!provider) {
+      this.logger.logWarn(this.context, 'user not fround', {
+        providerId: payload.sub,
+        type: ProviderEnum.LOCAL,
+        reason: 'user_not_found',
+      });
+      throw new AppException({
+        message: 'User not found',
+        code: ErrorCode.USER_NOT_FOUND,
+        statusCode: HttpStatus.NOT_FOUND,
+      });
+    }
+    if (provider.is_email_verified) {
+      this.logger.logWarn(this.context, 'email already verified', {
+        providerId: payload.sub,
+        type: ProviderEnum.LOCAL,
+      });
+      return {
+        message: 'Email already verified',
+        data: {
+          user_id: provider.user_id,
+          is_email_verified: provider.is_email_verified,
+        },
+      };
+    }
+
+    await this.providersRepo.markAccountAsVerified(
+      payload.sub,
+      ProviderEnum.LOCAL,
+    );
+    this.logger.log(this.context, 'verification email completed');
+    return {
+      message: 'Email verified successfully',
+      data: {
+        user_id: provider.user_id,
+        is_email_verified: provider.is_email_verified,
+      },
+    };
+  }
+
+  async resendVerification(body: { email: string }) {
+    this.logger.log(this.context, 'resend verification started', { ...body });
+    const user = await this.usersRepo.findByEmail(body.email);
+
+    if (!user) {
+      throw new AppException({
+        message: 'User not found',
+        code: ErrorCode.USER_NOT_FOUND,
+        statusCode: HttpStatus.NOT_FOUND,
+      });
+    }
+
+    const provider = await this.providersRepo.findByUserIdAndType(
+      user.user_id,
+      ProviderEnum.LOCAL,
+    );
+
+    if (!provider) {
+      throw new AppException({
+        message: 'Provider not found',
+        code: ErrorCode.PROVIDER_NOT_FOUND,
+        statusCode: HttpStatus.NOT_FOUND,
+      });
+    }
+
+    if (provider.is_email_verified) {
+      this.logger.logWarn(this.context, 'email already verified', {
+        providerId: provider.provider_id,
+        is_email_verified: provider.is_email_verified,
+      });
+      return {
+        message: 'Email already verified',
+      };
+    }
+
+    await this.sendEmailVerifyAccount(provider.provider_id, body.email);
+
+    this.logger.log(this.context, 'resend verification completed', { ...body });
+    return {
+      message: 'Verification email sent successfully',
+    };
+  }
+
+  async forgotPassword(body: { email: string }) {
+    this.logger.log(this.context, 'forgot password started', { ...body });
     const user = await this.usersRepo.findByEmail(body.email);
     if (!user) {
+      this.logger.logWarn(this.context, 'user not found', {
+        ...body,
+        reason: 'user_not_found',
+      });
       return {
         message: 'If this email exists, you will receive a reset link',
       };
@@ -386,13 +485,14 @@ export class AuthService {
         },
       );
     }
-
+    this.logger.log(this.context, 'forgot password completed', { ...body });
     return {
       message: 'If this email exists, you will receive a reset link',
     };
   }
 
   async resetPassword(body: ResetPasswordDto) {
+    this.logger.log(this.context, 'reset password started');
     const payload = await this.jwtAuthService.verifyResetPassordToken(
       body.token,
     );
@@ -403,6 +503,10 @@ export class AuthService {
     );
 
     if (!provider || !provider.is_email_verified || !provider.hash_password) {
+      this.logger.logWarn(this.context, 'invalid or expired token', {
+        providerId: payload.sub,
+        type: ProviderEnum.LOCAL,
+      });
       throw new AppException({
         message: 'Invalid or expired token',
         code: ErrorCode.TOKEN_INVALID,
@@ -416,6 +520,10 @@ export class AuthService {
     );
 
     if (isSamePassword) {
+      this.logger.logWarn(this.context, 'new password must be different', {
+        providerId: payload.sub,
+        type: ProviderEnum.LOCAL,
+      });
       throw new AppException({
         message: 'New password must be different',
         code: ErrorCode.INVALID_PASSWORD,
@@ -436,14 +544,23 @@ export class AuthService {
         },
         tx,
       );
+      this.logger.log(this.context, 'revoke all login', {
+        provider_id: provider.provider_id,
+        type: ProviderEnum.LOCAL,
+        reason: 'update_password',
+      });
     });
 
+    this.logger.log(this.context, 'reset password completed');
     return {
       message: 'Password reset successfully',
     };
   }
 
   private async sendEmailVerifyAccount(provider_id: string, email: string) {
+    this.logger.log(this.context, 'send email verify account started', {
+      provider_id,
+    });
     const token = await this.jwtAuthService.generateVerifyEmailToken(
       provider_id,
       email,
@@ -459,6 +576,9 @@ export class AuthService {
         removeOnFail: 10,
       },
     );
+    this.logger.log(this.context, 'send email verify account completed', {
+      provider_id,
+    });
   }
 
   private async storeTokens(
@@ -470,7 +590,9 @@ export class AuthService {
     tx?: DbTx,
   ) {
     const db = tx ?? this.db;
-
+    this.logger.log(this.context, 'store token started', {
+      provider_id: data.provider_id,
+    });
     const refresh_token = this.jwtAuthService.generateRefreshToken();
 
     const hashedToken = await this.argon2Service.hashData(refresh_token);
@@ -485,6 +607,11 @@ export class AuthService {
       );
 
       if (!session) {
+        this.logger.logWarn(this.context, 'failed to create session', {
+          provider_id: data.provider_id,
+          user_agent: data.user_agent,
+          ip_address: data.ip_address,
+        });
         throw new AppException({
           message: 'Failed to create session',
           statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -505,7 +632,9 @@ export class AuthService {
       data.provider_id,
       session.session_id,
     );
-
+    this.logger.log(this.context, 'store token completed', {
+      provider_id: data.provider_id,
+    });
     return {
       refresh_token,
       access_token,
@@ -519,6 +648,10 @@ export class AuthService {
     ip: string,
   ) {
     return this.db.transaction(async (tx) => {
+      this.logger.log(this.context, 'social auth started', {
+        providerId: data.provider_user_id,
+        type: data.type,
+      });
       let user = await this.usersRepo.findByEmail(data.email, tx);
 
       if (!user) {
@@ -558,8 +691,7 @@ export class AuthService {
           tx,
         );
       }
-
-      return this.storeTokens(
+      const result = await this.storeTokens(
         {
           provider_id: provider.provider_id,
           user_agent: userAgent,
@@ -567,6 +699,11 @@ export class AuthService {
         },
         tx,
       );
+      this.logger.log(this.context, 'social auth completed', {
+        providerId: data.provider_user_id,
+        type: data.type,
+      });
+      return result;
     });
   }
 }

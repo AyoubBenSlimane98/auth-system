@@ -4,12 +4,18 @@ import sgMail from '@sendgrid/mail';
 import { AppType, SendGridType } from '../../../../configuration/types';
 import { AppException } from '../../../../common/filters';
 import { ErrorCode } from '../../../../common/enums';
+import { LoggerService } from '../../../logs/logger.service';
 
 @Injectable()
 export class SendGridService {
+  private context: string = SendGridService.name;
   private readonly from: string;
   private readonly link: string;
-  constructor(private readonly config: ConfigService) {
+
+  constructor(
+    private readonly config: ConfigService,
+    private readonly logger: LoggerService,
+  ) {
     const apiKey = this.config.getOrThrow<SendGridType>('sendgrid').apiKey;
     if (!apiKey) {
       throw new AppException({ message: 'Missing API key' });
@@ -27,7 +33,11 @@ export class SendGridService {
   }
 
   async sendEmailVerifyAccount(email: string, token: string) {
+    const context = SendGridService.name;
     const url = `${this.link}/verify-email?token=${token}`;
+    this.logger.log(context, 'sending verify account email', {
+      email,
+    });
     try {
       await sgMail.send({
         to: email,
@@ -81,13 +91,24 @@ export class SendGridService {
   </div>
 `,
       });
+      this.logger.log(context, 'verify account sent successfully', {
+        email,
+      });
       return {
         message: 'Verification email sent successfully',
         data: {
           email,
         },
       };
-    } catch {
+    } catch (err) {
+      this.logger.logError(
+        context,
+        'failed to send verify account email',
+        err,
+        {
+          email,
+        },
+      );
       throw new AppException({
         message: 'Failed to send verification email',
         code: ErrorCode.EMAIL_SEND_FAILED,
@@ -98,7 +119,10 @@ export class SendGridService {
 
   async sendEmailResetPassword(email: string, token: string) {
     const url = `${this.link}/reset-password?token=${token}`;
-
+    const context = SendGridService.name;
+    this.logger.log(context, 'sending reset password email', {
+      email,
+    });
     try {
       await sgMail.send({
         to: email,
@@ -141,7 +165,16 @@ export class SendGridService {
   </div>
 `,
       });
-    } catch {
+      this.logger.log(context, 'reset password sent successfully', { email });
+    } catch (err) {
+      this.logger.logError(
+        context,
+        'failed to send reset password email',
+        err,
+        {
+          email,
+        },
+      );
       throw new AppException({
         message: 'Failed to send reset password email',
         code: ErrorCode.EMAIL_SEND_FAILED,

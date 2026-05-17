@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { Profile, Strategy } from 'passport-twitter';
+import { Profile, Strategy } from '@superfaceai/passport-twitter-oauth2';
 import { STRATEGIES } from './constants';
 import { ConfigService } from '@nestjs/config';
 import { TwitterType } from '../../../configuration/types';
@@ -15,9 +15,11 @@ export class TwitterStrategy extends PassportStrategy(
   constructor(private readonly config: ConfigService) {
     const twitter = config.getOrThrow<TwitterType>('twitter');
     super({
-      consumerKey: twitter.key,
-      consumerSecret: twitter.secret,
+      clientID: twitter.clientID,
+      clientSecret: twitter.clientSecret,
       callbackURL: twitter.callback_url,
+      clientType: 'confidential',
+      scope: ['users.read', 'tweet.read', 'offline.access'],
     });
   }
   validate(_: string, __: string, profile: Profile): TwitterTypes {

@@ -1,17 +1,18 @@
 import { Global, Inject, Module, OnApplicationShutdown } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Pool } from 'pg';
-import { DatabaseType } from '../configuration/types';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { DATABASE_CONNECTION, DATABASE_POOL } from './constants';
-import * as tables from './schema';
+import * as schema from './schema';
+import { DatabaseType } from '../../configuration/types';
+import { LoggerService } from '../logs/logger.service';
 @Global()
 @Module({
   providers: [
     {
       provide: DATABASE_POOL,
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => {
+      inject: [ConfigService, LoggerService],
+      useFactory: (config: ConfigService, logger: LoggerService) => {
         const db = config.getOrThrow<DatabaseType>('database');
 
         const pool = new Pool({
@@ -20,11 +21,15 @@ import * as tables from './schema';
           idleTimeoutMillis: 30000,
           connectionTimeoutMillis: 5000,
         });
+
+        const context = 'PostgreSQL';
+
         pool.on('connect', () => {
-          console.log('PostgreSQL pool connected');
+          logger.log(context, 'pool connected');
         });
+
         pool.on('error', (err) => {
-          console.error('Unexpected PostgreSQL error', err);
+          logger.logError(context, 'Unexpected error', err);
         });
         return pool;
       },
@@ -33,20 +38,25 @@ import * as tables from './schema';
       provide: DATABASE_CONNECTION,
       inject: [DATABASE_POOL],
       useFactory: (pool: Pool) => {
-        return drizzle(pool, { schema: { ...tables } });
+        return drizzle(pool, { schema });
       },
     },
   ],
   exports: [DATABASE_POOL, DATABASE_CONNECTION],
 })
 export class DatabaseModule implements OnApplicationShutdown {
-  constructor(@Inject(DATABASE_POOL) private readonly pool: Pool) {}
+  private context: string = 'PostgreSQL';
+  constructor(
+    @Inject(DATABASE_POOL) private readonly pool: Pool,
+    private readonly logger: LoggerService,
+  ) {}
   async onApplicationShutdown() {
     try {
       await this.pool.end();
-      console.log('PostgreSQL pool closed');
+
+      this.logger.log(this.context, 'pool closed');
     } catch (err) {
-      console.error('Error shutting down DB pool', err);
+      this.logger.logError(this.context, 'Error shutting down DB pool', err);
     }
   }
 }

@@ -8,10 +8,17 @@ export class RedisService {
 
   async get<T = string>(key: string): Promise<T | null> {
     const value = await this.redis.get(key);
-    return value ? (JSON.parse(value) as T) : null;
+
+    if (!value) return null;
+
+    try {
+      return JSON.parse(value) as T;
+    } catch {
+      return null;
+    }
   }
 
-  async set(key: string, value: any, ttlSeconds?: number): Promise<void> {
+  async set(key: string, value: unknown, ttlSeconds?: number): Promise<void> {
     const serialized = JSON.stringify(value);
 
     if (ttlSeconds) {

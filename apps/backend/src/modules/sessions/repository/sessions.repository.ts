@@ -1,8 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { eq, and } from 'drizzle-orm';
-import { DATABASE_CONNECTION } from '../../../database/constants';
-import type { DB, DbTx } from '../../../database/types';
-import { sessions } from '../../../database/schema';
+import { DATABASE_CONNECTION } from '../../../infrastructure/database/constants';
+import { sessions } from '../../../infrastructure/database/schema';
+import type { DB, DbTx } from '../../../infrastructure/database/types';
 
 @Injectable()
 export class SessionsRepository {
