@@ -28,7 +28,7 @@ async function bootstrap() {
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   });
 
-  const prot = config.get<number>('APP_PORT') || 3002;
+  const prot = Number(process.env.PORT) || 3002;
   await app.listen(prot, '0.0.0.0');
 }
 void bootstrap();
