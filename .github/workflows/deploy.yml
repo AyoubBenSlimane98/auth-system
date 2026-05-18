@@ -1,0 +1,59 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+
+    steps:
+      # 1. Checkout
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Setup Node
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      # 3. Enable Corepack
+      - name: Enable pnpm
+        run: corepack enable
+
+      # 4. Setup pnpm store cache
+      - name: Get pnpm store path
+        id: pnpm-cache
+        run: echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: pnpm-store-
+
+      # 5. Install deps
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # 6. Build backend (Turbo + Remote Cache)
+      - name: Build backend
+        run: pnpm turbo run build --filter=backend...
+
+      # 7. Run DB migrations
+      - name: Run DB migrations
+        run: pnpm --filter backend db:migrate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      # 8. Deploy to Render
+      - name: Deploy to Render
+        run: curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
