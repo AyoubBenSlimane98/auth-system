@@ -15,22 +15,22 @@ import {
   redisConfig,
   sendGridConfig,
   twitterConfig,
-} from './configuration';
-import { AuthModule } from './modules/auth/auth.module';
-import { UsersModule } from './modules/users/users.module';
-import { ProvidersModule } from './modules/providers/providers.module';
-import { SessionsModule } from './modules/sessions/sessions.module';
-import { TokensModule } from './modules/tokens/tokens.module';
+} from '@configuration';
+import { AuthModule } from '@modules/auth/auth.module';
+import { UsersModule } from '@modules/users/users.module';
+import { ProvidersModule } from '@modules/providers/providers.module';
+import { SessionsModule } from '@modules/sessions/sessions.module';
+import { TokensModule } from '@modules/tokens/tokens.module';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
-import { JwtAuthGuard } from './modules/auth/guards';
-import { ResponseInterceptor } from './common/interceptors/response.interceptor';
-import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
-import { RedisModule } from './infrastructure/redis/redis.module';
-import { RateLimitGuard } from './common/guards/rate-limit.guard';
-import { QueueModule } from './infrastructure/queue/queue.module';
-import { HttpRedirectMiddleware } from './common/middlewares/http-redirect.middleware';
-import { LogsModule } from './infrastructure/logs/logs.module';
-import { DatabaseModule } from './infrastructure/database/database.module';
+import { JwtAuthGuard } from '@modules/auth/guards';
+import { ResponseInterceptor } from '@common/interceptors/response.interceptor';
+import { GlobalExceptionFilter } from '@common/filters';
+import { RedisModule } from '@infrastructure/redis/redis.module';
+import { RateLimitGuard } from '@common/guards/rate-limit.guard';
+import { QueueModule } from '@infrastructure/queue/queue.module';
+import { HttpRedirectMiddleware } from '@common/middlewares/http-redirect.middleware';
+import { LoggerModule } from '@infrastructure/logs/logger.module';
+import { DatabaseModule } from '@infrastructure/database/database.module';
 
 @Module({
   imports: [
@@ -50,7 +50,7 @@ import { DatabaseModule } from './infrastructure/database/database.module';
       envFilePath: `.env.${process.env.NODE_ENV}`,
       expandVariables: true,
     }),
-    LogsModule,
+    LoggerModule,
     DatabaseModule,
     AuthModule,
     UsersModule,

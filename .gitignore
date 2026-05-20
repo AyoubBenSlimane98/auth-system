@@ -24,7 +24,6 @@ next-env.d.ts
 !.env.example.*
 
 # logs
-logs
 *.log
 npm-debug.log*
 pnpm-debug.log*
