@@ -1,12 +1,13 @@
 import { Global, Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { EMAIL_QUEUE } from './constants';
-import { EmailProcessor } from './processors/notifications/email.processor';
-import { SendGridService } from './processors/notifications/sendgrid.service';
-import { REDIS } from '../redis/constants';
+import {
+  EmailProcessor,
+  SendGridService,
+} from '@infrastructure/queue/processors/notifications';
+import { REDIS } from '@infrastructure/redis/constants';
 import Redis from 'ioredis';
-import { PinoLogger } from 'nestjs-pino';
-import { LoggerService } from '../logs/logger.service';
+import { LoggerService } from '@infrastructure/logs/logger.service';
 
 @Global()
 @Module({
