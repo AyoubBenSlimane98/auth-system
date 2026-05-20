@@ -1,28 +1,28 @@
 import { HttpStatus, Inject, Injectable } from '@nestjs/common';
-import { AppException } from '../../../common/filters';
-import { ErrorCode } from '../../../common/enums';
-import { SessionsRepository } from '../../sessions/repository/sessions.repository';
-import { UsersRepository } from '../../users/repository/users.repository';
-import { ProvidersRepository } from '../../providers/repository/providers.repository';
-import { Argon2Service } from './argon2.service';
-import { JwtAuthService } from './jwt-auth.service';
-import { TokensRepository } from '../../tokens/repository/tokens.repository';
-import { ProviderEnum } from '../../providers/enums/providers.enum';
+import { AppException } from '@common/filters';
+import { ErrorCode } from '@common/enums';
+import { SessionsRepository } from '@modules/sessions/repository/sessions.repository';
+import { UsersRepository } from '@modules/users/repository/users.repository';
+import { ProvidersRepository } from '@modules/providers/repository/providers.repository';
+import { Argon2Service } from '@modules/auth/services/argon2.service';
+import { JwtAuthService } from '@modules/auth/services/jwt-auth.service';
+import { TokensRepository } from '@modules/tokens/repository/tokens.repository';
+import { ProviderEnum } from '@modules/providers/enums/providers.enum';
 import {
   GoogleDto,
   LocalSignInDto,
   LocalSignUpDto,
   ResetPasswordDto,
   TwitterDto,
-} from '../dtos';
+} from '@modules/auth/dtos';
 import type { Response } from 'express';
-import { CookieUtil } from '../utils';
+import { CookieUtil } from '@modules/auth/utils';
 import { InjectQueue } from '@nestjs/bullmq';
-import { EMAIL_QUEUE } from '../../../infrastructure/queue/constants';
+import { EMAIL_QUEUE } from '@infrastructure/queue/constants';
 import { Queue } from 'bullmq';
-import { DATABASE_CONNECTION } from '../../../infrastructure/database/constants';
-import type { DB, DbTx } from '../../../infrastructure/database/types';
-import { LoggerService } from '../../../infrastructure/logs/logger.service';
+import { DATABASE_CONNECTION } from '@infrastructure/database/constants';
+import type { DB, DbTx } from '@infrastructure/database/types';
+import { LoggerService } from '@infrastructure/logs/logger.service';
 
 @Injectable()
 export class AuthService {

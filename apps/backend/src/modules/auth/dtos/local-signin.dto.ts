@@ -1,5 +1,5 @@
 import { PickType } from '@nestjs/mapped-types';
-import { LocalSignUpDto } from './local-signup.dto';
+import { LocalSignUpDto } from '@modules/auth/dtos';
 
 export class LocalSignInDto extends PickType(LocalSignUpDto, [
   'email',

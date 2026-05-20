@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { TokensRepository } from './repository/tokens.repository';
+import { TokensRepository } from '@modules/tokens/repository/tokens.repository';
 
 @Module({
   providers: [TokensRepository],

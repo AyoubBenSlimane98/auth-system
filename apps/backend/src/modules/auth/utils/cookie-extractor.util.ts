@@ -1,5 +1,5 @@
 import type { Request } from 'express';
-import { JwtCookies } from '../../../common/types';
+import { JwtCookies } from '@common/types';
 
 export const cookieExtractor = (req: Request): string | null => {
   if (!req?.cookies) return null;

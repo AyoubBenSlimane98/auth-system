@@ -1,16 +1,20 @@
 import { Module } from '@nestjs/common';
-import { AuthService } from './services/auth.service';
-import { AuthController } from './auth.controller';
+import { AuthService } from '@modules/auth/services/auth.service';
+import { AuthController } from '@modules/auth/auth.controller';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { JwtType } from '../../configuration/types';
-import { JwtAuthService } from './services/jwt-auth.service';
-import { ProvidersModule } from '../providers/providers.module';
-import { SessionsModule } from '../sessions/sessions.module';
-import { UsersModule } from '../users/users.module';
-import { TokensModule } from '../tokens/tokens.module';
-import { GoogleStrategy, JwtAuthStrategy, TwitterStrategy } from './strategies';
-import { Argon2Service } from './services/argon2.service';
+import { JwtType } from '@configuration/types';
+import { JwtAuthService } from '@modules/auth/services/jwt-auth.service';
+import { ProvidersModule } from '@modules/providers/providers.module';
+import { SessionsModule } from '@modules/sessions/sessions.module';
+import { UsersModule } from '@modules/users/users.module';
+import { TokensModule } from '@modules/tokens/tokens.module';
+import {
+  GoogleStrategy,
+  JwtAuthStrategy,
+  TwitterStrategy,
+} from '@modules/auth/strategies';
+import { Argon2Service } from '@modules/auth/services/argon2.service';
 import { PassportModule } from '@nestjs/passport';
 
 @Module({

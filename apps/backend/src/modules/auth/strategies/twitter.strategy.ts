@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Profile, Strategy } from '@superfaceai/passport-twitter-oauth2';
-import { STRATEGIES } from './constants';
+import { STRATEGIES } from '@modules/auth/strategies';
 import { ConfigService } from '@nestjs/config';
-import { TwitterType } from '../../../configuration/types';
-import { ProviderEnum } from '../../providers/enums/providers.enum';
-import { TwitterTypes } from '../../../common/types';
+import { TwitterType } from '@configuration/types';
+import { ProviderEnum } from '@modules/providers/enums/';
+import { TwitterTypes } from '@common/types';
 
 @Injectable()
 export class TwitterStrategy extends PassportStrategy(

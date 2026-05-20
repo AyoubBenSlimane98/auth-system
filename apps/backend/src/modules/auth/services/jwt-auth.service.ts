@@ -2,14 +2,14 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JsonWebTokenError, JwtService, TokenExpiredError } from '@nestjs/jwt';
 import { randomBytes, randomUUID } from 'crypto';
-import { JwtType } from '../../../configuration/types';
-import { ErrorCode, JwtPayloadTypes } from '../../../common/enums';
-import { AppException } from '../../../common/filters';
+import { JwtType } from '@configuration/types';
+import { ErrorCode, JwtPayloadTypes } from '@common/enums';
+import { AppException } from '@common/filters';
 import {
   JwtAuthPayload,
   JwtEmailPayload,
   JwtResetPayload,
-} from '../../../common/types';
+} from '@common/types';
 
 export interface JwtKeyMap {
   auth: JwtAuthPayload;

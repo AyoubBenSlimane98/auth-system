@@ -1,6 +1,6 @@
 import { PickType } from '@nestjs/mapped-types';
 import { IsNotEmpty, IsString } from 'class-validator';
-import { LocalSignInDto } from './local-signin.dto';
+import { LocalSignInDto } from '@modules/auth/dtos';
 
 export class ResetPasswordDto extends PickType(LocalSignInDto, [
   'password',

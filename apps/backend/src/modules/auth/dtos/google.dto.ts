@@ -1,5 +1,5 @@
 import { IsEmail, IsEnum, IsNotEmpty, IsString } from 'class-validator';
-import { ProviderEnum } from '../../providers/enums/providers.enum';
+import { ProviderEnum } from '@modules/providers/enums';
 
 export class GoogleDto {
   @IsEmail()

@@ -1,9 +1,9 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { eq, and } from 'drizzle-orm';
-import { ProviderEnum } from '../enums/providers.enum';
-import { DATABASE_CONNECTION } from '../../../infrastructure/database/constants';
-import { providers } from '../../../infrastructure/database/schema';
-import type { DB, DbTx } from '../../../infrastructure/database/types';
+import { ProviderEnum } from '@modules/providers/enums';
+import { DATABASE_CONNECTION } from '@infrastructure/database/constants';
+import { providers } from '@infrastructure/database/schema';
+import type { DB, DbTx } from '@infrastructure/database/types';
 
 @Injectable()
 export class ProvidersRepository {
