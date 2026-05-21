@@ -19,6 +19,7 @@ export class TwitterStrategy extends PassportStrategy(
       clientSecret: twitter.clientSecret,
       callbackURL: twitter.callback_url,
       clientType: 'confidential',
+      state: false,
       scope: ['users.read', 'tweet.read', 'offline.access'],
     });
   }
