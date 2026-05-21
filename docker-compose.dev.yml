@@ -1,0 +1,69 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+      target: dev
+
+    container_name: backend_dev
+
+    ports:
+      - "3002:3002"
+
+    env_file:
+      - ./apps/backend/.env.development
+
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    volumes:
+      - .:/app
+      - root_node_modules:/app/node_modules
+      - backend_node_modules:/app/apps/backend/node_modules
+
+    command: pnpm --filter backend start:dev
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis_dev
+
+    ports:
+      - "6379:6379"
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  db:
+    image: postgres:18
+
+    container_name: postgres_db
+
+    restart: always
+
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: auth_db
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - pgData:/var/lib/postgresql
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgData:
+  root_node_modules:
+  backend_node_modules:
