@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Profile, Strategy } from 'passport-google-oauth20';
-import { STRATEGIES } from './constants';
+import { STRATEGIES } from '@modules/auth/strategies';
 import { ConfigService } from '@nestjs/config';
-import { GoogleType } from '../../../configuration/types';
-import { ProviderEnum } from '../../providers/enums/providers.enum';
-import { GoogleTypes } from '../../../common/types';
+import { GoogleType } from '@configuration/types';
+import { ProviderEnum } from '@modules/providers/enums';
+import { GoogleTypes } from '@common/types';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(

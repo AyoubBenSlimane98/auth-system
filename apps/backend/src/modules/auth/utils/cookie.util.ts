@@ -1,5 +1,5 @@
 import type { CookieOptions, Response } from 'express';
-import { JwtCookies } from '../../../common/types';
+import { JwtCookies } from '@common/types';
 
 const isProd = process.env.NODE_ENV === 'production';
 const options: CookieOptions = {

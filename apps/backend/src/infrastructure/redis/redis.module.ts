@@ -1,10 +1,10 @@
 import { Global, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
-import { RedisType } from '../../configuration/types';
-import { REDIS } from './constants';
-import { RedisService } from './redis.service';
-import { LoggerService } from '../logs/logger.service';
+import { RedisType } from '@configuration/types';
+import { REDIS } from '@infrastructure/redis/constants';
+import { RedisService } from '@infrastructure/redis/redis.service';
+import { LoggerService } from '@infrastructure/logs/logger.service';
 
 @Global()
 @Module({

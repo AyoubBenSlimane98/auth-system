@@ -2,10 +2,13 @@ import { Global, Inject, Module, OnApplicationShutdown } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
-import { DATABASE_CONNECTION, DATABASE_POOL } from './constants';
-import * as schema from './schema';
-import { DatabaseType } from '../../configuration/types';
-import { LoggerService } from '../logs/logger.service';
+import {
+  DATABASE_CONNECTION,
+  DATABASE_POOL,
+} from '@infrastructure/database/constants';
+import * as schema from '@infrastructure/database/schema';
+import { DatabaseType } from '@configuration/types';
+import { LoggerService } from '@infrastructure/logs/logger.service';
 @Global()
 @Module({
   providers: [

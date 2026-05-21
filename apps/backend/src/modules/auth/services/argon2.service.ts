@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as argon2 from 'argon2';
-import { Argon2Type } from '../../../configuration/types';
+import { Argon2Type } from '@configuration/types';
 
 @Injectable()
 export class Argon2Service {

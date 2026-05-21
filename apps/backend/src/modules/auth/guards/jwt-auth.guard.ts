@@ -1,10 +1,14 @@
 import { AuthGuard } from '@nestjs/passport';
-import { STRATEGIES } from '../strategies';
+import { STRATEGIES } from '@modules/auth/strategies';
 import { Reflector } from '@nestjs/core';
-import { ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Observable } from 'rxjs';
-import { IS_PUBLIC_KEY } from '../../../common/decorators';
-import { LoggerService } from '../../../infrastructure/logs/logger.service';
+import { IS_PUBLIC_KEY } from '@common/decorators';
+import { LoggerService } from '@infrastructure/logs/logger.service';
 import { Request } from 'express';
 
 @Injectable()

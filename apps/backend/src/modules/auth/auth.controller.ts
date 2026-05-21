@@ -10,20 +10,20 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './services/auth.service';
 import { ConfigService } from '@nestjs/config';
-import { Public, RateLimit } from '../../common/decorators';
+import { Public, RateLimit } from '@common/decorators';
 import {
   GoogleDto,
   LocalSignInDto,
   LocalSignUpDto,
   ResetPasswordDto,
   TwitterDto,
-} from './dtos';
+} from '@modules/auth/dtos';
 import type { Request, Response } from 'express';
-import { CookieUtil } from './utils';
-import type { AuthRequest, JwtCookies } from '../../common/types';
-import { GoogleGuard, TwitterGuard } from './guards';
-import { AppType } from '../../configuration/types';
-import { LoggerService } from '../../infrastructure/logs/logger.service';
+import { CookieUtil } from '@modules/auth/utils';
+import type { AuthRequest, JwtCookies } from '@common/types';
+import { GoogleGuard, TwitterGuard } from '@modules/auth/guards';
+import { AppType } from '@configuration/types';
+import { LoggerService } from '@infrastructure/logs/logger.service';
 
 @Controller('auth')
 export class AuthController {

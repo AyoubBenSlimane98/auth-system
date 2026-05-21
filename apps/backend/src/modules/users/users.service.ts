@@ -1,8 +1,8 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { UsersRepository } from './repository/users.repository';
-import { ProvidersRepository } from '../providers/repository/providers.repository';
-import { AppException } from '../../common/filters';
-import { ErrorCode } from '../../common/enums';
+import { UsersRepository } from '@modules/users/repository/users.repository';
+import { ProvidersRepository } from '@modules/providers/repository/providers.repository';
+import { AppException } from '@common/filters';
+import { ErrorCode } from '@common/enums';
 
 @Injectable()
 export class UsersService {
